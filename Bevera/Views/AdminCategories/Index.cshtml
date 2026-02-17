@@ -1,0 +1,135 @@
+﻿@using Bevera.Models.Catalog
+@using Bevera.Models.ViewModels
+@model PagedResult<Category>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Categories";
+}
+
+<h2 class="mb-3">Categories</h2>
+
+<div class="mb-3">
+    <a class="btn btn-success" asp-action="Create">+ Add Main Category</a>
+</div>
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th style="width:80px;">Image</th>
+            <th>Name</th>
+            <th style="width:120px;">Status</th>
+            <th style="width:200px;">Created</th>
+            <th style="width:260px;">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @{
+            var mains = Model.Items.Where(c => c.ParentCategoryId == null).ToList();
+            var subs = Model.Items.Where(c => c.ParentCategoryId != null).ToList();
+        }
+
+        @if (mains.Count == 0)
+        {
+            <tr>
+                <td colspan="5" class="text-center text-muted">No categories.</td>
+            </tr>
+        }
+        else
+        {
+            foreach (var main in mains)
+            {
+                <tr class="table-primary">
+                    <td>
+                        @if (!string.IsNullOrEmpty(main.ImagePath))
+                        {
+                            <img src="@main.ImagePath" style="width:60px;height:60px;object-fit:cover;border-radius:8px;" />
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </td>
+
+                    <td>
+                        <strong>@main.Name</strong>
+                    </td>
+
+                    <td>
+                        @if (main.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Inactive</span>
+                        }
+                    </td>
+
+                    <td>@main.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+
+                    <td>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a class="btn btn-sm btn-outline-primary"
+                                   asp-action="Edit"
+                                   asp-route-id="@main.Id">
+                                Edit
+                            </a>
+
+                            <a class="btn btn-sm btn-success"
+                                   asp-action="Create"
+                                   asp-route-parentId="@main.Id">
+                                + Subcategory
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                var children = subs.Where(s => s.ParentCategoryId == main.Id).ToList();
+
+                foreach (var child in children)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(child.ImagePath))
+                            {
+                                <img src="@child.ImagePath" style="width:50px;height:50px;object-fit:cover;border-radius:8px;" />
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+
+                        <td style="padding-left:40px;">
+                            ↳ @child.Name
+                        </td>
+
+                        <td>
+                            @if (child.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactive</span>
+                            }
+                        </td>
+
+                        <td>@child.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+
+                        <td>
+                            <a class="btn btn-sm btn-outline-primary"
+                                   asp-action="Edit"
+                                   asp-route-id="@child.Id">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        }
+
+    </tbody>
+</table>

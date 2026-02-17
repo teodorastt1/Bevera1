@@ -1,0 +1,143 @@
+﻿@model Bevera.Models.ViewModel.AdminDashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="kpi-grid">
+
+    <div class="kpi-card kpi--blue">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Categories</div>
+                <div class="kpi-value">@Model.CategoriesCount</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/category.png" alt="Categories" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <a class="kpi-link" asp-controller="AdminCategories" asp-action="Index">
+                <span class="eye">👁️</span> View details
+            </a>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi--rose">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Products</div>
+                <div class="kpi-value">@Model.ProductsCount</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/products.png" alt="Products" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <a class="kpi-link" asp-controller="AdminProducts" asp-action="Index">
+                <span class="eye">👁️</span> View details
+            </a>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi--dark">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Total Orders</div>
+                <div class="kpi-value">@Model.OrdersCount</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/orders.png" alt="Orders" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <a class="kpi-link" asp-controller="Orders" asp-action="Index">
+                <span class="eye">👁️</span> View details
+            </a>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi--red">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Revenue</div>
+                <div class="kpi-value">@Model.Revenue.ToString("0.00")</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/revenue.jpg" alt="Revenue" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <span style="color:#6b7280;font-weight:700;font-size:13px;">лв.</span>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi--rose">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Pending</div>
+                <div class="kpi-value">@Model.PendingOrders</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/pending.png" alt="Pending" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <a class="kpi-link" asp-controller="Orders" asp-action="Index" asp-route-status="Submitted">
+                <span class="eye">👁️</span> View details
+            </a>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi--blue">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Delivered</div>
+                <div class="kpi-value">@Model.DeliveredOrders</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/delivered.png" alt="Delivered" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <a class="kpi-link" asp-controller="Orders" asp-action="Index" asp-route-status="Delivered">
+                <span class="eye">👁️</span> View details
+            </a>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi--red">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Low stock</div>
+                <div class="kpi-value">@Model.LowStockProducts</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/lowstock.jpg" alt="Low stock" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <a class="kpi-link" asp-controller="AdminProducts" asp-action="Index" asp-route-stock="low">
+                <span class="eye">👁️</span> View details
+            </a>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi--dark">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Users</div>
+                <div class="kpi-value">@Model.UsersCount</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/user.jpg" alt="Users" />
+            </div>
+        </div>
+        <div class="kpi-footer">
+            <a class="kpi-link" asp-controller="AdminRoles" asp-action="Index">
+                <span class="eye">👁️</span> View details
+            </a>
+        </div>
+    </div>
+
+</div>

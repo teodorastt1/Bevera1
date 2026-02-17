@@ -1,0 +1,35 @@
+@*
+  Minimal layout for Identity pages (Login/Register/etc.).
+  Purpose: keep auth UI clean and prevent the main site navbar/mega-menu from affecting it.
+*@
+
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Bevera</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Bevera.styles.css" asp-append-version="true" />
+
+    @RenderSection("Styles", required: false)
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; margin: 0; }
+    </style>
+</head>
+
+<body>
+    @RenderBody()
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

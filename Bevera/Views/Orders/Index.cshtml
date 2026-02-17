@@ -1,0 +1,104 @@
+@using Bevera.Helpers
+@using Bevera.Models.ViewModels
+@model PagedResult<Bevera.Models.Order>
+
+@{
+    ViewData["Title"] = "Orders";
+    var currentStatus = (string?)ViewBag.Status;
+    var q = (string?)ViewBag.Q;
+    var pageSize = (int)(ViewBag.PageSize ?? 10);
+}
+
+<div class="container-fluid p-3">
+
+    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="mb-0">Поръчки</h3>
+            <div class="text-muted">Филтър по статус, търсене по № или клиент</div>
+        </div>
+
+        <form class="d-flex gap-2" method="get">
+            <select class="form-select" name="status" style="min-width: 190px;">
+                <option value="">Всички</option>
+                <option value="@OrderStates.Draft" selected="@(currentStatus == OrderStates.Draft)">Draft</option>
+                <option value="@OrderStates.Submitted" selected="@(currentStatus == OrderStates.Submitted)">Submitted</option>
+                <option value="@OrderStates.Preparing" selected="@(currentStatus == OrderStates.Preparing)">Preparing</option>
+                <option value="@OrderStates.ReadyForPickup" selected="@(currentStatus == OrderStates.ReadyForPickup)">ReadyForPickup</option>
+                <option value="@OrderStates.Delivered" selected="@(currentStatus == OrderStates.Delivered)">Delivered</option>
+                <option value="@OrderStates.Received" selected="@(currentStatus == OrderStates.Received)">Received</option>
+                <option value="@OrderStates.Cancelled" selected="@(currentStatus == OrderStates.Cancelled)">Cancelled</option>
+            </select>
+
+            <input class="form-control" type="text" name="q" value="@q" placeholder="Търси..." style="min-width: 240px;" />
+            <input type="hidden" name="pageSize" value="@pageSize" />
+            <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:100px;">#</th>
+                        <th>Client</th>
+                        <th style="width:160px;">Status</th>
+                        <th style="width:120px;">Payment</th>
+                        <th style="width:140px;">Total</th>
+                        <th style="width:200px;">Updated</th>
+                        <th style="width:220px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var o in Model.Items)
+                {
+                    <tr>
+                        <td class="fw-bold">@o.Id</td>
+                        <td>
+                            <div class="fw-semibold">@(o.Client?.Email ?? o.Email)</div>
+                            <div class="text-muted" style="font-size: 13px;">@o.FullName</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">@o.Status</span>
+                        </td>
+                        <td>
+                            <span class="badge @(o.PaymentStatus == PaymentStates.Paid ? "bg-success" : "bg-warning text-dark")">@o.PaymentStatus</span>
+                        </td>
+                        <td>@o.Total.ToString("0.00") лв.</td>
+                        <td class="text-muted">@o.ChangedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@o.Id">
+                                <i class="bi bi-eye"></i> Details
+                            </a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="DownloadInvoice" asp-route-id="@o.Id">
+                                <i class="bi bi-file-earmark-pdf"></i> Invoice
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="text-muted">Page @Model.Page / @Model.TotalPages • Total: @Model.TotalItems</div>
+
+        <div class="btn-group">
+            <a class="btn btn-outline-secondary @(Model.HasPrevious ? "" : "disabled")"
+               asp-action="Index"
+               asp-route-status="@currentStatus"
+               asp-route-q="@q"
+               asp-route-page="@(Model.Page - 1)"
+               asp-route-pageSize="@pageSize">Prev</a>
+
+            <a class="btn btn-outline-secondary @(Model.HasNext ? "" : "disabled")"
+               asp-action="Index"
+               asp-route-status="@currentStatus"
+               asp-route-q="@q"
+               asp-route-page="@(Model.Page + 1)"
+               asp-route-pageSize="@pageSize">Next</a>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,247 @@
+﻿@model Bevera.Models.Catalog.Product
+
+@{
+    ViewData["Title"] = Model.Name;
+
+    var inStock = Model.StockQty > 0;
+
+    // Ако имаш Images навързани – взима main, иначе първата, иначе placeholder
+    var imageSrc =
+        Model.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
+        ?? Model.Images?.FirstOrDefault()?.ImagePath
+        ?? Url.Content("~/images/image-1.jpg");
+}
+
+<style>
+    :root {
+        --bb: #2B0C0C; /* Black Bean */
+        --or: #C3766F; /* Old Rose */
+        --cc: #4A070C; /* Chocolate Cosmos */
+        --pb: #A9B9C7; /* Powder Blue */
+        --cr: #AD0B16; /* Cornell Red */
+    }
+
+    .p-wrap {
+        padding: 28px 0;
+    }
+
+    .p-card {
+        border: 1px solid rgba(43,12,12,.10);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 14px 40px rgba(0,0,0,.10);
+        overflow: hidden;
+    }
+
+    .p-img {
+        background: linear-gradient(180deg, rgba(169,185,199,.35), rgba(195,118,111,.10));
+        padding: 18px;
+        border-right: 1px solid rgba(43,12,12,.08);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .p-img img {
+            width: 100%;
+            max-height: 430px;
+            object-fit: contain;
+            border-radius: 14px;
+            background: #fff;
+        }
+
+    .p-body {
+        padding: 22px 22px 20px;
+    }
+
+    .p-title {
+        font-family: 'Playfair Display',serif;
+        color: var(--bb);
+        font-size: 2rem;
+        margin: 0 0 6px;
+        line-height: 1.1;
+    }
+
+    .p-price {
+        font-weight: 800;
+        color: var(--cc);
+        font-size: 1.75rem;
+        margin-bottom: 14px;
+    }
+
+    .p-badges .badge {
+        border-radius: 999px;
+        padding: .5rem .75rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+    }
+
+    .badge-in {
+        background: rgba(169,185,199,.55);
+        color: var(--bb);
+        border: 1px solid rgba(43,12,12,.12);
+    }
+
+    .badge-out {
+        background: rgba(173,11,22,.10);
+        color: var(--cr);
+        border: 1px solid rgba(173,11,22,.25);
+    }
+
+    .p-desc-title {
+        font-size: .85rem;
+        font-weight: 800;
+        color: rgba(43,12,12,.70);
+        letter-spacing: .10em;
+        text-transform: uppercase;
+        margin: 16px 0 6px;
+    }
+
+    .p-desc {
+        color: rgba(43,12,12,.80);
+        margin: 0;
+    }
+
+    .p-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 18px;
+    }
+
+    .btn-soft {
+        border-radius: 999px;
+        padding: .55rem 1rem;
+        font-weight: 800;
+        border: 1px solid rgba(43,12,12,.18);
+        background: #fff;
+        color: var(--bb);
+    }
+
+        .btn-soft:hover {
+            background: rgba(169,185,199,.25);
+            border-color: rgba(43,12,12,.28);
+            color: var(--bb);
+        }
+
+    .btn-fav {
+        border-radius: 999px;
+        padding: .55rem 1rem;
+        font-weight: 900;
+        border: 1px solid rgba(173,11,22,.35);
+        background: rgba(173,11,22,.06);
+        color: var(--cr);
+    }
+
+        .btn-fav:hover {
+            background: rgba(173,11,22,.12);
+            color: var(--cr);
+        }
+
+    .btn-buy {
+        border-radius: 999px;
+        padding: .60rem 1.15rem;
+        font-weight: 900;
+        border: 0;
+        background: var(--cr);
+        color: #fff;
+        box-shadow: 0 10px 22px rgba(173,11,22,.22);
+    }
+
+        .btn-buy:hover {
+            filter: brightness(.95);
+        }
+
+    .p-note {
+        margin-top: 14px;
+        color: rgba(43,12,12,.55);
+        font-size: .9rem;
+        text-align: center;
+    }
+</style>
+
+<div class="container p-wrap">
+    <div class="p-card">
+        <div class="row g-0">
+            <div class="col-lg-6 p-img">
+                <img src="@imageSrc" alt="@Model.Name" />
+            </div>
+
+            <div class="col-lg-6">
+                <div class="p-body">
+                    <h1 class="p-title">@Model.Name</h1>
+                    <div class="p-price">@Model.Price.ToString("0.00") лв.</div>
+
+                    <div class="p-badges mb-2">
+                        @if (inStock)
+                        {
+                            <span class="badge badge-in"><i class="bi bi-check-circle me-1"></i> Налично</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-out"><i class="bi bi-x-circle me-1"></i> Няма наличност</span>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Description))
+                    {
+                        <div class="p-desc-title">Описание</div>
+                        <p class="p-desc">@Model.Description</p>
+                    }
+
+                    <div class="p-actions">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-controller="Client" asp-action="ToggleFavorite" method="post" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@Model.Id" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                <button type="submit" class="btn btn-fav">
+                                    <i class="bi bi-heart me-1"></i> Добави в любими
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="btn btn-fav"
+                               asp-area="Identity"
+                               asp-page="/Account/Login"
+                               asp-route-returnUrl="@Context.Request.Path">
+                                <i class="bi bi-heart me-1"></i> Добави в любими
+                            </a>
+                        }
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-controller="Cart" asp-action="Add" method="post" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@Model.Id" />
+                                <input type="hidden" name="qty" value="1" />
+                                <button type="submit" class="btn btn-buy" @(inStock ? "" : "disabled")>
+                                    <i class="bi bi-cart-plus me-1"></i> Купи
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="btn btn-buy @(inStock ? "" : "disabled")"
+                               asp-area="Identity"
+                               asp-page="/Account/Login"
+                               asp-route-returnUrl="@Context.Request.Path">
+                                <i class="bi bi-cart-plus me-1"></i> Купи
+                            </a>
+                        }
+                    </div>
+
+
+                    <div class="p-note">
+                        @(inStock ? "Натисни “Купи” и продуктът влиза директно в количката." : "В момента няма наличност.")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

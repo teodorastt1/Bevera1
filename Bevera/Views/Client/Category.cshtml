@@ -1,0 +1,270 @@
+﻿@model List<Bevera.Models.Catalog.Product>
+
+@{
+    ViewData["Title"] = ViewBag.CategoryName ?? "Категория";
+
+    string q = ViewBag.Q as string ?? "";
+    decimal? minPrice = ViewBag.MinPrice as decimal?;
+    decimal? maxPrice = ViewBag.MaxPrice as decimal?;
+    bool onlyAvailable = ViewBag.OnlyAvailable != null && (bool)ViewBag.OnlyAvailable;
+
+    var favIds = ViewBag.FavIds as List<int> ?? new List<int>();
+
+    // връщане обратно към текущата страница (вкл. query string)
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<div class="container-fluid py-4">
+    <div class="row g-4">
+
+        <!-- LEFT: Filters -->
+        <aside class="col-12 col-lg-3">
+            <div class="filter-box shadow-sm">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="filter-title">Филтри</div>
+
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-controller="Client"
+                       asp-action="Category"
+                       asp-route-id="@Context.Request.RouteValues["id"]">
+                        Изчисти
+                    </a>
+                </div>
+
+                <form method="get"
+                      asp-controller="Client"
+                      asp-action="Category"
+                      asp-route-id="@Context.Request.RouteValues["id"]">
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Търси</label>
+                        <input class="form-control" name="q" value="@q" placeholder="Напр. Coca Cola" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Цена</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input class="form-control" type="number" step="0.01" min="0" name="minPrice" value="@(minPrice?.ToString() ?? "")" placeholder="От" />
+                            </div>
+                            <div class="col-6">
+                                <input class="form-control" type="number" step="0.01" min="0" name="maxPrice" value="@(maxPrice?.ToString() ?? "")" placeholder="До" />
+                            </div>
+                        </div>
+                        <div class="form-text">Остави празно, ако не ти трябва.</div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="onlyAvailable" value="true" @(onlyAvailable ? "checked" : "") />
+                        <label class="form-check-label">Само налични</label>
+                    </div>
+
+                    <button class="btn btn-dark w-100" type="submit">
+                        Приложи
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- RIGHT: Products -->
+        <section class="col-12 col-lg-9">
+            <div class="mb-3">
+                <h1 class="category-title">@ViewData["Title"]</h1>
+                <div class="text-muted small">Категория: @ViewData["Title"]</div>
+            </div>
+
+            @if (Model == null || Model.Count == 0)
+            {
+                <div class="alert alert-light border">
+                    Няма продукти по тези филтри.
+                </div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var p in Model)
+                    {
+                        var img = (p.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
+                        ?? p.Images?.FirstOrDefault()?.ImagePath
+                        ?? "/images/image-1.jpg");
+
+                        bool isFav = favIds.Contains(p.Id);
+
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="product-tile shadow-sm">
+
+                              
+
+                                <a class="product-link"
+                                   asp-controller="Client"
+                                   asp-action="Product"
+                                   asp-route-id="@p.Id">
+
+                                    <div class="product-img-wrap">
+                                        <img src="@img" alt="@p.Name" class="product-img" />
+                                    </div>
+
+                                    <div class="product-info">
+                                        <div class="product-name">@p.Name</div>
+                                        <div class="product-price">@p.Price.ToString("0.00") лв.</div>
+                                    </div>
+                                </a>
+
+                                <!-- BUY -->
+                                <div class="px-3 pb-3 d-flex gap-2">
+                                    @if (User.Identity?.IsAuthenticated == true)
+                                    {
+                                        <form asp-controller="Cart" asp-action="Add" method="post" class="flex-fill">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@p.Id" />
+                                            <input type="hidden" name="qty" value="1" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <button type="submit" class="btn btn-dark w-100 rounded-pill">
+                                                Купи
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-dark w-100 rounded-pill flex-fill"
+                                           asp-area="Identity"
+                                           asp-page="/Account/Login"
+                                           asp-route-returnUrl="@returnUrl">
+                                            Купи
+                                        </a>
+                                    }
+
+                                    <!-- small heart button (ако не е логнат => login) -->
+                                    @if (User.Identity?.IsAuthenticated == true)
+                                    {
+                                        <form asp-controller="Client" asp-action="ToggleFavorite" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@p.Id" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <button type="submit" class="btn btn-outline-danger rounded-pill" title="Любими">
+                                                <i class="bi bi-heart"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-outline-danger rounded-pill"
+                                           asp-area="Identity"
+                                           asp-page="/Account/Login"
+                                           asp-route-returnUrl="@returnUrl"
+                                           title="Любими">
+                                            <i class="bi bi-heart"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+    </div>
+</div>
+
+<style>
+    .filter-box {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 16px;
+        padding: 16px;
+        position: sticky;
+        top: 92px; /* fixed navbar offset */
+    }
+
+    .filter-title {
+        font-weight: 800;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        font-size: .9rem;
+    }
+
+    .category-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: 800;
+        font-size: 2.4rem;
+        margin: 0;
+    }
+
+    .product-tile {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .product-link {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .product-img-wrap {
+        background: #f7f7f7;
+        height: 170px; /* НЕ огромни */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .product-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .product-info {
+        padding: 10px 12px 12px;
+    }
+
+    .product-name {
+        font-weight: 700;
+        font-size: .95rem;
+        line-height: 1.2;
+        height: 2.4em; /* 2 реда макс */
+        overflow: hidden;
+    }
+
+    .product-price {
+        margin-top: 6px;
+        font-weight: 800;
+    }
+
+    /* heart */
+    .fav-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 2;
+    }
+
+    .fav-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.92);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 18px rgba(0,0,0,.12);
+        text-decoration: none;
+        border: 0;
+        padding: 0;
+    }
+
+        .fav-icon i {
+            font-size: 1.1rem;
+            color: #111;
+        }
+
+            .fav-icon i.bi-heart-fill {
+                color: #d11a2a;
+            }
+</style>

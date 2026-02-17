@@ -1,0 +1,102 @@
+@model Bevera.Models.ViewModels.CheckoutVm
+
+@{
+    ViewData["Title"] = "Плащане";
+}
+
+<div class="container py-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-12 col-lg-7">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h2 class="mb-3" style="font-family:'Playfair Display',serif;font-weight:800">Order Payment</h2>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@err.ErrorMessage</div>
+                            }
+                        </div>
+                    }
+
+                    <form asp-action="Checkout" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="PaymentMethod" id="pmCard" value="card" @(Model.PaymentMethod == "card" ? "checked" : "")>
+                                <label class="btn btn-outline-primary" for="pmCard"><i class="bi bi-credit-card"></i> Card</label>
+
+                                <input type="radio" class="btn-check" name="PaymentMethod" id="pmCash" value="cash" @(Model.PaymentMethod == "cash" ? "checked" : "")>
+                                <label class="btn btn-outline-secondary" for="pmCash"><i class="bi bi-cash"></i> Cash On Delivery</label>
+                            </div>
+                            <div class="form-text">* Симулация: и двата метода се приемат и поръчката се създава.</div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Име и фамилия</label>
+                                <input class="form-control" asp-for="FullName" placeholder="Test User" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Имейл</label>
+                                <input class="form-control" asp-for="Email" placeholder="test@email.com" />
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Телефон</label>
+                                <input class="form-control" asp-for="Phone" placeholder="+359..." />
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Адрес</label>
+                                <input class="form-control" asp-for="Address" placeholder="Град, улица..." />
+                            </div>
+                        </div>
+
+                        <button class="btn btn-dark w-100 mt-4 py-2 rounded-4" type="submit">
+                            Confirm Payment (@Model.Total.ToString("0.00") лв.)
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">Вашата поръчка</h5>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Артикул</th>
+                                    <th class="text-end">Цена</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var i in Model.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@i.Name</div>
+                                            <div class="text-muted small">@i.Quantity x @i.UnitPrice.ToString("0.00") лв.</div>
+                                        </td>
+                                        <td class="text-end fw-bold">@i.Total.ToString("0.00") лв.</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="fw-bold">Общо</td>
+                                    <td class="text-end fw-bold">@Model.Total.ToString("0.00") лв.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

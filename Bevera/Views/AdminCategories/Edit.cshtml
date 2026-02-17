@@ -1,0 +1,55 @@
+﻿@using Bevera.Models.ViewModels
+@model AdminCategoryFormViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Edit Category";
+}
+
+<h2 class="mb-3">Edit Category</h2>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form method="post" enctype="multipart/form-data" class="card p-3">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ExistingImagePath" />
+
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input class="form-control" asp-for="Name" />
+        <span class="text-danger" asp-validation-for="Name"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Current image</label><br />
+        @if (!string.IsNullOrEmpty(Model.ExistingImagePath))
+        {
+            <img src="@Model.ExistingImagePath" style="width:90px;height:90px;object-fit:cover;border-radius:10px;" />
+        }
+        else
+        {
+            <span class="text-muted">No image</span>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">New image (optional)</label>
+        <input class="form-control" asp-for="ImageFile" type="file" />
+    </div>
+
+    <div class="form-check mb-3">
+        <input class="form-check-input" asp-for="IsActive" />
+        <label class="form-check-label">Is Active</label>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Update</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,38 @@
+﻿@model List<Bevera.Models.Catalog.Category>
+
+@{
+    var mains = Model.Where(c => c.ParentCategoryId == null).ToList();
+    var subs = Model.Where(c => c.ParentCategoryId != null).ToList();
+}
+
+<div class="mega-menu">
+    <div class="mega-content">
+
+        @foreach (var main in mains)
+        {
+            var children = subs.Where(s => s.ParentCategoryId == main.Id).ToList();
+
+            <div class="mega-column">
+                <h6>
+                    <a asp-controller="Client"
+                           asp-action="Category"
+                           asp-route-id="@main.Id">
+                        @main.Name
+                    </a>
+                </h6>
+
+                @foreach (var child in children)
+                {
+                    <div>
+                        <a asp-controller="Client"
+                               asp-action="Category"
+                               asp-route-id="@child.Id">
+                            @child.Name
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+</div>

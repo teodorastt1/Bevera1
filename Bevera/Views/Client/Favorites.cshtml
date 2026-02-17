@@ -1,0 +1,55 @@
+﻿@model List<Bevera.Models.Favorite>
+
+@{
+    ViewData["Title"] = "Любими";
+}
+
+<div class="container py-4">
+    <h2 class="mb-3" style="font-family:'Playfair Display',serif;">Любими</h2>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="text-muted">Нямаш запазени продукти.</div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var f in Model)
+            {
+                var p = f.Product;
+                var img = p?.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
+                ?? p?.Images?.FirstOrDefault()?.ImagePath
+                ?? "/images/image-1.jpg";
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                        <div class="p-3 bg-light">
+                            <img src="@img" alt="@p?.Name" style="width:100%;height:220px;object-fit:contain;" />
+                        </div>
+
+                        <div class="card-body">
+                            <div class="fw-bold">@p?.Name</div>
+                            <div class="text-muted">@p?.Price.ToString("0.00") лв.</div>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <a class="btn btn-sm btn-outline-dark rounded-pill"
+                                   asp-controller="Client" asp-action="Product" asp-route-id="@p?.Id">
+                                    Виж
+                                </a>
+
+                                <form asp-controller="Client" asp-action="ToggleFavorite" method="post" class="ms-auto">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="productId" value="@p?.Id" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
+                                        <i class="bi bi-heartbreak"></i> Махни
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

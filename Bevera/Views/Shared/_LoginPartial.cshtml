@@ -1,0 +1,54 @@
+﻿@using Bevera.Data
+@using Bevera.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
+
+<ul class="navbar-nav align-items-center gap-2">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var userId = UserManager.GetUserId(User);
+        // Cart count is session-based (see /Cart/Count). Avoid DB count here.
+        var favCount = Db.Favorites.Count(x => x.UserId == userId);
+
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Client" asp-action="Profile" title="Profile">
+                <i class="bi bi-person-circle"></i>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link position-relative" asp-controller="Cart" asp-action="Index" title="Количка">
+                <i id="cartIcon" class="bi bi-cart3"></i>
+                <span id="cartBadge" class="cart-badge d-none">0</span>
+            </a>
+        </li>
+
+        <li class="nav-item d-none d-lg-inline">
+            <a class="nav-link position-relative" asp-controller="Client" asp-action="Favorites" title="Любими">
+                <i class="bi bi-heart"></i>
+                @if (favCount > 0)
+                {
+                    <span class="cart-badge" style="right:-12px; top:-6px; background:#f5b301; color:#111; box-shadow:0 8px 18px rgba(245,179,1,.25)">@favCount</span>
+                }
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <form class="d-inline" asp-area="Identity" asp-page="/Account/Logout"
+                  asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="btn btn-link nav-link p-0">Logout</button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link bevera-login-btn" asp-area="Identity" asp-page="/Account/Register">Register</a>
+        </li>
+    }
+</ul>

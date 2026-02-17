@@ -1,0 +1,56 @@
+@model List<Bevera.Models.ViewModel.WorkerLowStockVm>
+
+@{
+    ViewData["Title"] = "За зареждане";
+}
+
+<div class="worker-wrap">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <div class="worker-title" style="font-size: 26px;">Ниска наличност</div>
+                <div class="worker-subtitle">Списък с продукти, които са под минималния праг.</div>
+            </div>
+            <a class="btn btn-outline-secondary" asp-controller="Worker" asp-action="Index"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+
+        <div class="card worker-card">
+            <div class="card-body">
+                @if (Model.Count == 0)
+                {
+                    <div class="text-muted">Няма продукти за зареждане 🎉</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th style="width:120px;">Qty</th>
+                                    <th style="width:160px;">Min</th>
+                                    <th style="width:160px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var p in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@p.Name</td>
+                                    <td><span class="badge bg-danger">@p.Quantity</span></td>
+                                    <td class="text-muted">@p.MinQuantity</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-space" asp-action="Restock" asp-route-id="@p.ProductId">
+                                            <i class="bi bi-plus-circle"></i> Зареди
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

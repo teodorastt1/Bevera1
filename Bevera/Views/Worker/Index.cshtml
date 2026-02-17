@@ -1,0 +1,132 @@
+@model Bevera.Models.ViewModel.WorkerDashboardVm
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="worker-wrap">
+    <div class="container">
+
+        <div class="mb-4">
+            <div class="worker-title" style="font-size: 28px;">Складов работник</div>
+            <div class="worker-subtitle">Оперативни действия: поръчки, опаковане/изпращане, зареждане на стока.</div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+                <div class="card worker-card">
+                    <div class="card-body">
+                        <div class="worker-kpi">
+                            <div class="icon bg-space"><i class="bi bi-inbox-fill"></i></div>
+                            <div>
+                                <div class="value">@Model.NewOrders</div>
+                                <div class="label">Нови (Submitted)</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a class="btn btn-sm btn-space w-100" asp-controller="Orders" asp-action="Index" asp-route-status="Submitted">
+                                Виж поръчките
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card worker-card">
+                    <div class="card-body">
+                        <div class="worker-kpi">
+                            <div class="icon bg-slate"><i class="bi bi-box-seam-fill"></i></div>
+                            <div>
+                                <div class="value">@Model.PreparingOrders</div>
+                                <div class="label">В подготовка</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a class="btn btn-sm btn-outline-secondary w-100" asp-controller="Orders" asp-action="Index" asp-route-status="Preparing">
+                                Опаковане
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card worker-card">
+                    <div class="card-body">
+                        <div class="worker-kpi">
+                            <div class="icon bg-coffee"><i class="bi bi-truck"></i></div>
+                            <div>
+                                <div class="value">@Model.ShippedOrders</div>
+                                <div class="label">Готови за изпращане</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a class="btn btn-sm btn-outline-success w-100" asp-controller="Orders" asp-action="Index" asp-route-status="ReadyForPickup">
+                                Изпращане
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card worker-card">
+                    <div class="card-body">
+                        <div class="worker-kpi">
+                            <div class="icon bg-caput"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                            <div>
+                                <div class="value">@Model.LowStockProducts</div>
+                                <div class="label">За зареждане</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a class="btn btn-sm btn-outline-danger w-100" asp-controller="Worker" asp-action="LowStock">
+                                Зареждане
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-md-6">
+                <div class="card worker-card">
+                    <div class="card-body">
+                        <div class="worker-kpi">
+                            <div class="icon bg-tan"><i class="bi bi-credit-card"></i></div>
+                            <div>
+                                <div class="value">@Model.AwaitingPayment</div>
+                                <div class="label">Чакат плащане</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-muted" style="font-size:13px;">
+                            В тази дипломна симулираме плащането: работник/админ маркира поръчката като Paid.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card worker-card">
+                    <div class="card-body">
+                        <div class="worker-kpi">
+                            <div class="icon bg-space"><i class="bi bi-check2-circle"></i></div>
+                            <div>
+                                <div class="value">@Model.Paid</div>
+                                <div class="label">Платени</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a class="btn btn-sm btn-space w-100" asp-controller="Orders" asp-action="Index">
+                                Всички поръчки
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

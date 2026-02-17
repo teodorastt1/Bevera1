@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Bevera</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Bevera.styles.css" asp-append-version="true" />
+
+
+
+    <style>
+        :root {
+            --bevera-accent: #f5b301;
+            --bevera-dark: rgba(10, 12, 14, .65);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+        }
+
+        .bevera-navbar {
+            background: var(--bevera-dark);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+
+            .bevera-navbar .navbar-brand {
+                font-family: 'Playfair Display', serif;
+                font-weight: 700;
+                color: #fff !important;
+                font-size: 1.6rem;
+                letter-spacing: .5px;
+            }
+
+            .bevera-navbar .nav-link {
+                color: rgba(255,255,255,.85) !important;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .08em;
+                font-size: .9rem;
+                padding: .75rem 1rem;
+            }
+
+                .bevera-navbar .nav-link:hover {
+                    color: #fff !important;
+                }
+
+        .page-content {
+            padding-top: 72px;
+        }
+
+        body.home .page-content {
+            padding-top: 0;
+        }
+
+        /* Search */
+        .bevera-search {
+            width: 280px;
+            max-width: 42vw;
+        }
+
+            .bevera-search input {
+                border-radius: 999px;
+                background: rgba(255,255,255,.10);
+                border: 1px solid rgba(255,255,255,.18);
+                color: #fff;
+            }
+
+                .bevera-search input::placeholder {
+                    color: rgba(255,255,255,.65);
+                }
+
+            .bevera-search button {
+                border-radius: 999px;
+                background: var(--bevera-accent);
+                border: 0;
+                font-weight: 800;
+            }
+
+        /* Mega menu */
+        .bevera-mega-menu {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(0,0,0,.08);
+            box-shadow: 0 18px 45px rgba(0,0,0,.18);
+            max-width: 980px;
+            width: calc(100vw - 24px);
+            margin: 10px auto 0;
+        }
+
+        .mega-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .mega-link {
+            display: block;
+            padding: 10px 12px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #111;
+            font-weight: 600;
+        }
+
+            .mega-link:hover {
+                background: rgba(245,179,1,.16);
+            }
+
+        /* IMPORTANT: desktop hover open (Razor needs @@media) */
+        @@media (min-width: 992px) {
+            .bevera-dropdown:hover > .dropdown-menu {
+                display: block;
+            }
+        }
+
+        @@media (max-width: 991px) {
+            .mega-grid {
+                grid-template-columns: repeat(2, minmax(160px, 1fr));
+            }
+
+            .bevera-search {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+
+
+<body class="@(ViewData["BodyClass"] ?? "")">
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bevera-navbar fixed-top">
+            <div class="container">
+
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">Bevera</a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#beveraNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="beveraNav">
+
+                    <ul class="navbar-nav me-3 align-items-lg-center">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+
+                        <li class="nav-item mega-wrapper">
+                            <a class="nav-link" href="#" onclick="return false;">ПО КАТЕГОРИИ ▾</a>
+                            @await Component.InvokeAsync("CategoriesMenu")
+                        </li>
+
+
+
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#footer">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#footer">Contact</a>
+                        </li>
+                    </ul>
+
+                    <!-- SEARCH (goes to Client/Search) -->
+                    <form class="d-flex bevera-search me-lg-3 ms-lg-auto" asp-controller="Client" asp-action="Search" method="get">
+                        <input class="form-control form-control-sm me-2" type="text" name="q" placeholder="Търси продукт..." />
+                        <button class="btn btn-sm" type="submit" title="Търси">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+
+                    <!-- RIGHT ICONS + LOGIN/REGISTER -->
+                    <div class="d-flex align-items-center">
+                        <partial name="_LoginPartial" />
+                    </div>
+
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <script>
+        (async function () {
+            try {
+                const res = await fetch('/Cart/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const data = await res.json();
+
+                const badge = document.getElementById('cartBadge');
+                if (!badge) return;
+
+                const count = Number(data.count || 0);
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.classList.remove('d-none');
+
+                    // ако току-що е добавено (TempData)
+                    const shouldPulse = '@(TempData["CartPulse"] != null ? "1" : "0")';
+                    if (shouldPulse === "1") {
+                        badge.classList.add('pulse');
+                        setTimeout(() => badge.classList.remove('pulse'), 600);
+                    }
+                } else {
+                    badge.classList.add('d-none');
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+
+    <main class="page-content">
+        @RenderBody()
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+@using Bevera.Helpers
+@model Bevera.Models.Order
+
+@{
+    ViewData["Title"] = $"Order #{Model.Id}";
+}
+
+<div class="container-fluid p-3">
+
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
+        <div>
+            <h3 class="mb-0">Поръчка #@Model.Id</h3>
+            <div class="text-muted">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left"></i> Back</a>
+            <a class="btn btn-outline-secondary" asp-action="DownloadInvoice" asp-route-id="@Model.Id">
+                <i class="bi bi-file-earmark-pdf"></i> Invoice
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                        <span class="badge bg-secondary p-2">Status: @Model.Status</span>
+                        <span class="badge @(Model.PaymentStatus == PaymentStates.Paid ? "bg-success" : "bg-warning text-dark") p-2">Payment: @Model.PaymentStatus</span>
+                        <span class="ms-auto fw-bold">Total: @Model.Total.ToString("0.00") лв.</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @* Payment simulation *@
+                        @if (Model.PaymentStatus != PaymentStates.Paid)
+                        {
+                            <form asp-action="MarkPaid" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="bi bi-credit-card"></i> Маркирай платена
+                                </button>
+                            </form>
+                        }
+
+                        @* Workflow *@
+                        @if (Model.Status == OrderStates.Submitted && Model.PaymentStatus == PaymentStates.Paid)
+                        {
+                            <form asp-action="StartPreparing" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="bi bi-box2"></i> Започни подготовка
+                                </button>
+                            </form>
+                        }
+
+                        @if (Model.Status == OrderStates.Preparing)
+                        {
+                            <form asp-action="MarkReadyForPickup" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="bi bi-check2-square"></i> Готова за изпращане
+                                </button>
+                            </form>
+                        }
+
+                        @if (Model.Status == OrderStates.ReadyForPickup)
+                        {
+                            <form asp-action="Ship" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button class="btn btn-success" type="submit">
+                                    <i class="bi bi-truck"></i> Изпрати
+                                </button>
+                            </form>
+                        }
+
+                        
+                    </div>
+
+                    <h5 class="mb-2">Items</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th style="width:120px;">Unit</th>
+                                    <th style="width:90px;">Qty</th>
+                                    <th style="width:140px;">Line total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var it in Model.Items)
+                            {
+                                <tr>
+                                    <td>@it.ProductName</td>
+                                    <td>@it.UnitPrice.ToString("0.00")</td>
+                                    <td>@it.Quantity</td>
+                                    <td>@it.LineTotal.ToString("0.00")</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="mb-2">Client</h5>
+                    <div class="fw-semibold">@Model.FullName</div>
+                    <div class="text-muted">@Model.Email</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Phone))
+                    {
+                        <div class="text-muted">@Model.Phone</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Address))
+                    {
+                        <div class="text-muted">@Model.Address</div>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-2">History</h5>
+                    @if (Model.StatusHistory == null || !Model.StatusHistory.Any())
+                    {
+                        <div class="text-muted">No history yet.</div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var h in Model.StatusHistory.OrderByDescending(x => x.ChangedAt))
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="fw-semibold">@h.Status</div>
+                                        <div class="text-muted" style="font-size:12px;">@h.ChangedAt.ToLocalTime().ToString("dd.MM HH:mm")</div>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(h.Note))
+                                    {
+                                        <div class="text-muted" style="font-size:13px;">@h.Note</div>
+                                    }
+                                    <div class="text-muted" style="font-size:12px;">by @h.ChangedByUserId</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

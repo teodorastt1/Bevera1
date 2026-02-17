@@ -1,0 +1,27 @@
+﻿@model Bevera.Models.ViewModels.EditUserRoleViewModel
+
+@{
+    ViewData["Title"] = "Промяна на роля";
+}
+
+<h1 class="mb-3">@ViewData["Title"]</h1>
+
+<div class="card p-4">
+    <div class="mb-2"><b>User:</b> @Model.Email</div>
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="UserId" />
+
+        <div class="mb-3">
+            <label class="form-label">Роля</label>
+            <select asp-for="RoleName" class="form-select" asp-items="Model.Roles">
+                <option value="">(без роля)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save</button>
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+    </form>
+</div>

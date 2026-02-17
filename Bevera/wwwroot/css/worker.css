@@ -1,0 +1,119 @@
+﻿:root {
+    --spaceCadet: #25344F;
+    --slateGray: #617891;
+    --tan: #D5B893;
+    --coffee: #6F4D38;
+    --caputMortuum: #632024;
+    --cardRadius: 16px;
+}
+
+.worker-wrap {
+    background: linear-gradient(180deg, rgba(37,52,79,.08), rgba(97,120,145,.10));
+    min-height: calc(100vh - 90px);
+    padding: 24px 0;
+}
+
+.worker-title {
+    color: var(--spaceCadet);
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+.worker-subtitle {
+    color: var(--slateGray);
+    margin-top: 4px;
+}
+
+.worker-card {
+    border: 0;
+    border-radius: var(--cardRadius);
+    box-shadow: 0 12px 30px rgba(37,52,79,.12);
+    overflow: hidden;
+}
+
+    .worker-card .card-body {
+        padding: 18px 18px;
+    }
+
+.worker-kpi {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+    .worker-kpi .icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+.bg-space {
+    background: var(--spaceCadet);
+}
+
+.bg-slate {
+    background: var(--slateGray);
+}
+
+.bg-tan {
+    background: var(--tan);
+    color: var(--spaceCadet) !important;
+}
+
+.bg-coffee {
+    background: var(--coffee);
+}
+
+.bg-caput {
+    background: var(--caputMortuum);
+}
+
+.worker-kpi .value {
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--spaceCadet);
+}
+
+.worker-kpi .label {
+    color: var(--slateGray);
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.worker-actions a {
+    border-radius: 14px;
+    font-weight: 700;
+}
+
+.btn-space {
+    background: var(--spaceCadet);
+    color: #fff;
+    border: 0;
+}
+
+    .btn-space:hover {
+        filter: brightness(0.95);
+        color: #fff;
+    }
+
+.badge-space {
+    background: var(--spaceCadet);
+}
+
+.badge-slate {
+    background: var(--slateGray);
+}
+
+.badge-caput {
+    background: var(--caputMortuum);
+}
+
+.badge-tan {
+    background: var(--tan);
+    color: var(--spaceCadet);
+}

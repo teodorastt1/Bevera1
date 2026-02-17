@@ -1,0 +1,59 @@
+@model Bevera.Models.ViewModel.WorkerRestockVm
+
+@{
+    ViewData["Title"] = "Зареждане";
+}
+
+<div class="worker-wrap">
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <div class="worker-title" style="font-size: 26px;">Зареждане на стока</div>
+                <div class="worker-subtitle">@Model.Name</div>
+            </div>
+            <a class="btn btn-outline-secondary" asp-action="LowStock"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="card worker-card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="text-muted">Текуща наличност</div>
+                            <div class="fw-bold" style="font-size: 28px;">@Model.CurrentQuantity</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="text-muted">Минимален праг</div>
+                            <div class="fw-bold" style="font-size: 22px;">@Model.MinQuantity</div>
+                        </div>
+
+                        <form method="post" asp-action="Restock">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="ProductId" />
+                            <input type="hidden" asp-for="Name" />
+                            <input type="hidden" asp-for="CurrentQuantity" />
+                            <input type="hidden" asp-for="MinQuantity" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Добави количество</label>
+                                <input class="form-control" asp-for="AddQuantity" type="number" min="1" />
+                                <span class="text-danger" asp-validation-for="AddQuantity"></span>
+                            </div>
+
+                            <button class="btn btn-space w-100" type="submit">
+                                <i class="bi bi-check2"></i> Потвърди зареждане
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

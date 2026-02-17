@@ -1,0 +1,82 @@
+﻿@model Bevera.Models.ViewModels.AdminProductFormViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Edit Product";
+}
+
+<h1 class="mb-3">@ViewData["Title"]</h1>
+
+<form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ExistingImagePath" />
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Price (лв.)</label>
+            <input asp-for="Price" class="form-control" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Category</label>
+            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Stock Qty</label>
+            <input asp-for="StockQty" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Low Stock Threshold</label>
+            <input asp-for="LowStockThreshold" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Active</label>
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label class="form-check-label" asp-for="IsActive">Visible for clients</label>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">Description</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Current image</label><br />
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingImagePath))
+            {
+                <img src="@Model.ExistingImagePath" style="width:120px;height:120px;object-fit:cover;border-radius:12px;" />
+            }
+            else
+            {
+                <span class="text-muted">No image</span>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Change image (optional)</label>
+            <input asp-for="ImageFile" type="file" class="form-control" />
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-success" type="submit">Save</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

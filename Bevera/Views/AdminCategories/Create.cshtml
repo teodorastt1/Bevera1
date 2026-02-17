@@ -1,0 +1,61 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@using Bevera.Models.ViewModels
+@model AdminCategoryFormViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Create Category";
+}
+
+
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+<form method="post" enctype="multipart/form-data" class="card p-3">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <label class="form-label">Name</label>
+            <input class="form-control" asp-for="Name" />
+            <span class="text-danger" asp-validation-for="Name"></span>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <label class="form-label">Parent Category</label>
+            <select class="form-select" asp-for="ParentCategoryId" asp-items="Model.ParentOptions"></select>
+
+            <div class="form-text">
+                Leave empty to create a main category. Select a parent to create a subcategory.
+            </div>
+            <span class="text-danger" asp-validation-for="ParentCategoryId"></span>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <label class="form-label">Image (optional)</label>
+            <input class="form-control" asp-for="ImageFile" type="file" />
+            <span class="text-danger" asp-validation-for="ImageFile"></span>
+        </div>
+
+        <div class="col-12 col-lg-6 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" asp-for="IsActive">Is Active</label>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-3" />
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-success" type="submit">
+            <i class="bi bi-check2-circle me-1"></i> Save
+        </button>
+        <a class="btn btn-outline-secondary" asp-action="Index">
+            Back
+        </a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
