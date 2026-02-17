@@ -1,0 +1,116 @@
+﻿@model Bevera.Models.ViewModels.EditProfileVm
+@{
+    ViewData["Title"] = "Edit Profile";
+    ViewData["BodyClass"] = "bg-editprofile";
+}
+
+<div class="page-overlay">
+    <div class="container py-5" style="max-width: 720px;">
+
+        <h2 class="mb-4 text-center fw-bold" style="font-family:'Playfair Display',serif;">
+            Edit Details
+        </h2>
+
+        @if (TempData["Msg"] != null)
+        {
+            <div class="alert alert-success text-center shadow-sm">
+                @TempData["Msg"]
+            </div>
+        }
+
+        <div class="card border-0 shadow-lg rounded-4 p-4">
+
+            <form asp-action="EditProfile" method="post" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger small mb-3">
+                </div>
+
+                <div class="row g-4">
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">First Name</label>
+                        <input asp-for="FirstName"
+                               class="form-control form-control-lg"
+                               autocomplete="given-name"
+                               maxlength="50" />
+                        <span asp-validation-for="FirstName"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Last Name</label>
+                        <input asp-for="LastName"
+                               class="form-control form-control-lg"
+                               autocomplete="family-name"
+                               maxlength="50" />
+                        <span asp-validation-for="LastName"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Phone</label>
+                        <input asp-for="PhoneNumber"
+                               class="form-control form-control-lg"
+                               autocomplete="tel"
+                               pattern="^0[0-9]{9}$"
+                               maxlength="10"
+                               placeholder="0888123456" />
+                        <span asp-validation-for="PhoneNumber"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Address</label>
+                        <input asp-for="Address"
+                               class="form-control form-control-lg"
+                               autocomplete="street-address"
+                               maxlength="120" />
+                        <span asp-validation-for="Address"
+                              class="text-danger small"></span>
+                    </div>
+
+                </div>
+
+                <div class="d-flex justify-content-center gap-3 mt-5">
+
+                    <button type="submit"
+                            class="btn btn-warning rounded-pill fw-semibold px-4 shadow-sm"
+                            id="saveBtn">
+                        <i class="bi bi-check2-circle me-1"></i>
+                        Save Changes
+                    </button>
+
+                    <a asp-action="Profile"
+                           class="btn btn-outline-dark rounded-pill px-4">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Loading ефект
+        document.querySelector("form").addEventListener("submit", function () {
+            const btn = document.getElementById("saveBtn");
+            btn.innerHTML = "Saving...";
+            btn.disabled = true;
+        });
+
+        // Trim на всички input-и
+        document.querySelectorAll("input").forEach(i => {
+            i.addEventListener("blur", function () {
+                this.value = this.value.trim();
+            });
+        });
+    </script>
+}

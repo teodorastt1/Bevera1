@@ -9,7 +9,7 @@
         <div class="col-12 col-lg-7">
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-body p-4">
-                    <h2 class="mb-3" style="font-family:'Playfair Display',serif;font-weight:800">Order Payment</h2>
+                    <h2 class="mb-3" style="font-family:'Playfair Display',serif;font-weight:800">Плащане</h2>
 
                     @if (!ViewData.ModelState.IsValid)
                     {
@@ -27,38 +27,129 @@
                         <div class="mb-3">
                             <div class="btn-group w-100" role="group">
                                 <input type="radio" class="btn-check" name="PaymentMethod" id="pmCard" value="card" @(Model.PaymentMethod == "card" ? "checked" : "")>
-                                <label class="btn btn-outline-primary" for="pmCard"><i class="bi bi-credit-card"></i> Card</label>
+                                <label class="btn btn-outline-primary" for="pmCard"><i class="bi bi-credit-card"></i> Карта</label>
 
                                 <input type="radio" class="btn-check" name="PaymentMethod" id="pmCash" value="cash" @(Model.PaymentMethod == "cash" ? "checked" : "")>
-                                <label class="btn btn-outline-secondary" for="pmCash"><i class="bi bi-cash"></i> Cash On Delivery</label>
+                                <label class="btn btn-outline-secondary" for="pmCash"><i class="bi bi-cash"></i> Наложен платеж</label>
                             </div>
-                            <div class="form-text">* Симулация: и двата метода се приемат и поръчката се създава.</div>
+                            <div class="form-text">* Симулация: при плащане с карта изискваме данни за картата.</div>
+                        </div>
+
+                        <div id="cardBox" class="p-3 rounded-4 border mb-3" style="background:rgba(245,179,1,.08)">
+                            <div class="fw-bold mb-2">Данни за карта</div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Картодържател</label>
+                                    <input class="form-control" asp-for="CardHolder" placeholder="Име както е на картата" />
+                                    <span class="text-danger small" asp-validation-for="CardHolder"></span>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Номер на карта</label>
+                                    <input class="form-control" asp-for="CardNumber" inputmode="numeric" maxlength="10" pattern="\d{10}" placeholder="1234567890" />
+                                    <span class="text-danger small" asp-validation-for="CardNumber"></span>
+                                </div>
+
+                                <div class="col-6">
+                                    <label class="form-label">Месец</label>
+                                    <select class="form-select" asp-for="ExpMonth">
+                                        <option value="">--</option>
+                                        @for (int m = 1; m <= 12; m++)
+                                        {
+                                            <option value="@m">@m.ToString("00")</option>
+                                        }
+                                    </select>
+                                    <span class="text-danger small" asp-validation-for="ExpMonth"></span>
+                                </div>
+
+                                <div class="col-6">
+                                    <label class="form-label">Година</label>
+                                    <select class="form-select" asp-for="ExpYear">
+                                        <option value="">--</option>
+                                        @for (int y = DateTime.UtcNow.Year; y <= DateTime.UtcNow.Year + 10; y++)
+                                        {
+                                            <option value="@y">@y</option>
+                                        }
+                                    </select>
+                                    <span class="text-danger small" asp-validation-for="ExpYear"></span>
+                                </div>
+
+                                <div class="col-6">
+                                    <label class="form-label">CVC</label>
+                                    <input class="form-control" asp-for="Cvc" inputmode="numeric" maxlength="3" pattern="\d{3}" placeholder="123" />
+                                    <span class="text-danger small" asp-validation-for="Cvc"></span>
+                                </div>
+
+                                <div class="col-6 d-flex align-items-end">
+                                    <div class="text-muted small">* Не се запазва в базата. Само UI/валидация.</div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label">Име и фамилия</label>
                                 <input class="form-control" asp-for="FullName" placeholder="Test User" />
+                                <span class="text-danger small" asp-validation-for="FullName"></span>
                             </div>
 
                             <div class="col-12">
                                 <label class="form-label">Имейл</label>
                                 <input class="form-control" asp-for="Email" placeholder="test@email.com" />
+                                <span class="text-danger small" asp-validation-for="Email"></span>
                             </div>
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Телефон</label>
-                                <input class="form-control" asp-for="Phone" placeholder="+359..." />
+                                <input class="form-control" asp-for="Phone" inputmode="tel" placeholder="+359888123456" />
+                                <span class="text-danger small" asp-validation-for="Phone"></span>
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Адрес</label>
-                                <input class="form-control" asp-for="Address" placeholder="Град, улица..." />
+                                <label class="form-label">Град</label>
+                                <select class="form-select" asp-for="City">
+                                    <option value="">-- избери --</option>
+                                    <option>София</option>
+                                    <option>Пловдив</option>
+                                    <option>Варна</option>
+                                    <option>Бургас</option>
+                                    <option>Русе</option>
+                                    <option>Стара Загора</option>
+                                    <option>Плевен</option>
+                                    <option>Сливен</option>
+                                    <option>Добрич</option>
+                                    <option>Шумен</option>
+                                    <option>Перник</option>
+                                    <option>Хасково</option>
+                                    <option>Ямбол</option>
+                                    <option>Пазарджик</option>
+                                    <option>Благоевград</option>
+                                    <option>Велико Търново</option>
+                                    <option>Враца</option>
+                                    <option>Габрово</option>
+                                    <option>Кърджали</option>
+                                    <option>Монтана</option>
+                                    <option>Кюстендил</option>
+                                    <option>Ловеч</option>
+                                    <option>Търговище</option>
+                                    <option>Разград</option>
+                                    <option>Смолян</option>
+                                    <option>Казанлък</option>
+                                    <option>Сандански</option>
+                                    <option>Слънчев бряг</option>
+                                </select>
+                                <span class="text-danger small" asp-validation-for="City"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Адрес (улица, №, вход, ап.)</label>
+                                <input class="form-control" asp-for="Address" placeholder="Пример: ул. Иван Вазов 10, вх. А" />
+                                <span class="text-danger small" asp-validation-for="Address"></span>
                             </div>
                         </div>
 
-                        <button class="btn btn-dark w-100 mt-4 py-2 rounded-4" type="submit">
-                            Confirm Payment (@Model.Total.ToString("0.00") лв.)
+                        <button class="btn btn-dark w-100 mt-2 py-2 rounded-4" type="submit">
+                            Потвърди (@Model.Total.ToString("0.00") лв.)
                         </button>
                     </form>
                 </div>
@@ -100,3 +191,18 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleCardBox() {
+            const isCard = document.getElementById('pmCard')?.checked;
+            const box = document.getElementById('cardBox');
+            if (!box) return;
+            box.style.display = isCard ? 'block' : 'none';
+        }
+        document.getElementById('pmCard')?.addEventListener('change', toggleCardBox);
+        document.getElementById('pmCash')?.addEventListener('change', toggleCardBox);
+        toggleCardBox();
+    </script>
+}

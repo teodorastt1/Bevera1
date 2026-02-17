@@ -2,6 +2,17 @@ html {
     font-size: 14px;
 }
 
+:root {
+    /* Brand palette (from your references) */
+    --space-cadet: #253A4F;
+    --slate-gray: #617B91;
+    --tan: #D5A093;
+    --coffee: #6F4D38;
+    --caput-mortuum: #632024;
+    --champagne: #FBE6D1;
+    --accent-gold: #F5B301;
+}
+
 @media (min-width: 768px) {
     html {
         font-size: 16px;
@@ -162,16 +173,18 @@ body {
         .auth-links a:hover {
             border-bottom-color: #f5b301;
         }
-/* Mega dropdown – öåíòðèðàí è äà íå èçëèçà âñòðàíè */
+/* Mega dropdown â€“ Ã¶Ã¥Ã­Ã²Ã°Ã¨Ã°Ã Ã­ Ã¨ Ã¤Ã  Ã­Ã¥ Ã¨Ã§Ã«Ã¨Ã§Ã  Ã¢Ã±Ã²Ã°Ã Ã­Ã¨ */
 
 .bevera-mega {
     width: min(920px, calc(100vw - 32px));
     border-radius: 18px;
-    border: 1px solid rgba(0,0,0,.08);
-    box-shadow: 0 18px 40px rgba(0,0,0,.18);
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 22px 55px rgba(0,0,0,.28);
     left: 50% !important;
     transform: translateX(-50%) !important;
     margin-top: 12px !important;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(37,58,79,.96), rgba(99,32,36,.92));
 }
 
 .bevera-mega-inner {
@@ -182,6 +195,7 @@ body {
     font-weight: 800;
     font-size: 18px;
     margin-bottom: 10px;
+    color: rgba(255,255,255,.92);
 }
 
 .bevera-mega-grid {
@@ -207,12 +221,15 @@ body {
     padding: 10px 12px;
     border-radius: 12px;
     text-decoration: none;
-    color: #111;
-    font-weight: 600;
+    color: rgba(255,255,255,.92);
+    font-weight: 700;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.06);
 }
 
     .bevera-mega-link:hover {
-        background: rgba(245,179,1,.14);
+        background: rgba(245,179,1,.18);
+        border-color: rgba(245,179,1,.35);
     }
 /* Smaller product cards */
 
@@ -382,6 +399,48 @@ body {
     }
 }
 
+/* Cookie bar */
+.cookiebar{
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:12px;
+    z-index:2000;
+}
+.cookiebar__inner{
+    background: rgba(10,12,14,.92);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    box-shadow: 0 18px 45px rgba(0,0,0,.22);
+}
+.cookiebar__text{
+    font-size:13px;
+    opacity:.92;
+}
+.cookiebar__actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+/* JS flash */
+.js-flash-box{
+    position:fixed;
+    top:84px;
+    right:12px;
+    max-width:min(420px, calc(100vw - 24px));
+    opacity:0;
+    transform: translateY(-8px);
+    transition: all .15s ease;
+    z-index:2100;
+}
+.js-flash-box.show{
+    opacity:1;
+    transform: translateY(0);
+}
+
 .mega-wrapper {
     position: relative;
 }
@@ -391,7 +450,7 @@ body {
     position: absolute;
     top: 100%;
     left: 0;
-    width: 900px;
+    width: min(980px, calc(100vw - 24px));
     background: white;
     padding: 30px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -399,13 +458,58 @@ body {
     z-index: 999;
 }
 
+.mega-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:-10px 0 18px;
+}
+
+.mega-title{
+    font-weight:800;
+    letter-spacing:.02em;
+}
+
+.mega-close{
+    border:0;
+    background:transparent;
+    font-size:26px;
+    line-height:1;
+    padding:0 6px;
+    cursor:pointer;
+    color:#333;
+}
+
+.mega-close:hover{ color:#000; }
+
 .mega-wrapper:hover .mega-menu {
     display: block;
+}
+
+/* allow JS to open it on click (esp. mobile) */
+.mega-wrapper.mega-open .mega-menu{
+    display:block;
 }
 
 .mega-content {
     display: flex;
     gap: 40px;
+}
+
+@media (max-width: 992px){
+    .mega-menu{
+        position: fixed;
+        top: 72px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-height: calc(100vh - 96px);
+        overflow: auto;
+    }
+    .mega-content{
+        flex-direction: column;
+        gap:18px;
+    }
 }
 
 .mega-column h6 {
@@ -425,3 +529,95 @@ body {
         color: #000;
         font-weight: 600;
     }
+
+/* ===== Edit Profile Background ===== */
+
+.bg-editprofile {
+    background: url('/images/photoBackground.png') center/cover no-repeat fixed;
+}
+
+    .bg-editprofile .page-overlay {
+        min-height: 100vh;
+        padding: 40px 0;
+        background: linear-gradient( rgba(255,255,255,0.88), rgba(255,255,255,0.88) );
+    }
+
+/* Form polish */
+
+.form-control-lg {
+    border-radius: 12px;
+}
+
+.card {
+    backdrop-filter: blur(4px);
+}
+
+.profile-card {
+    position: relative;
+    border-radius: 18px;
+    background: white;
+    transition: all 0.35s ease;
+    overflow: hidden;
+}
+
+    /* Ð¼ÐµÐº Ð·Ð»Ð°Ñ‚ÐµÐ½ glow */
+    .profile-card::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient( 120deg, rgba(255,215,0,0.3), rgba(255,255,255,0.2), rgba(255,215,0,0.3) );
+        filter: blur(20px);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+    }
+
+    /* hover = Ð¸Ð·Ð¿Ð»ÑƒÐ²Ð°Ð½Ðµ */
+    .profile-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+
+        .profile-card:hover::before {
+            opacity: 1;
+        }
+
+.btn-warning {
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn-warning::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -75%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient( 120deg, rgba(255,255,255,0.4), rgba(255,255,255,0) );
+        transform: skewX(-25deg);
+        transition: left 0.6s ease;
+    }
+
+    .btn-warning:hover::after {
+        left: 130%;
+    }
+@keyframes subtlePulse {
+    0% {
+        box-shadow: 0 0 0 rgba(255,193,7,0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 25px rgba(255,193,7,0.6);
+    }
+
+    100% {
+        box-shadow: 0 0 0 rgba(255,193,7,0.4);
+    }
+}
+
+.profile-card {
+    animation: subtlePulse 4s infinite ease-in-out;
+}
+
+

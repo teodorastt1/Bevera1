@@ -21,5 +21,7 @@ namespace Bevera.Models.ViewModels
         public DateTime CreatedAt { get; set; }
         public decimal Total { get; set; }
         public string Status { get; set; } = "";
+
+        public bool HasInvoice { get; set; }
     }
 }

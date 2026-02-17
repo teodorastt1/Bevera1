@@ -159,8 +159,8 @@
                             <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
 
-                        <li class="nav-item mega-wrapper">
-                            <a class="nav-link" href="#" onclick="return false;">ПО КАТЕГОРИИ ▾</a>
+                        <li class="nav-item mega-wrapper" id="megaWrapper">
+                            <a class="nav-link mega-toggle" href="#" onclick="return false;" aria-haspopup="true" aria-expanded="false">ПО КАТЕГОРИИ <span class="ms-1">▾</span></a>
                             @await Component.InvokeAsync("CategoriesMenu")
                         </li>
 
@@ -222,8 +222,26 @@
 
 
     <main class="page-content">
+        @* JS flash messages *@
+        @{
+            var msg = TempData["FlashMessage"] as string;
+            var typ = TempData["FlashType"] as string;
+            var orderMsg = TempData["OrderSuccess"] as string;
+            if (!string.IsNullOrWhiteSpace(orderMsg) && string.IsNullOrWhiteSpace(msg))
+            {
+                msg = orderMsg;
+                typ = "success";
+            }
+        }
+        @if (!string.IsNullOrWhiteSpace(msg))
+        {
+            <div class="js-flash" data-message="@msg" data-type="@(typ ?? "info")"></div>
+        }
+
         @RenderBody()
     </main>
+
+	@await Component.InvokeAsync("DeliveredOrdersToast")
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

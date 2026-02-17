@@ -188,18 +188,30 @@ namespace Bevera.Controllers
                 return View(vm);
             }
 
+            var isCard = vm.PaymentMethod == "card";
+
+            // Extra safety: if cash, ignore any card fields
+            if (!isCard)
+            {
+                vm.CardHolder = null;
+                vm.CardNumber = null;
+                vm.ExpMonth = null;
+                vm.ExpYear = null;
+                vm.Cvc = null;
+            }
+
             var order = new Order
             {
                 ClientId = userId,
                 CreatedAt = DateTime.UtcNow,
                 ChangedAt = DateTime.UtcNow,
                 Status = OrderStates.Submitted,
-                PaymentStatus = PaymentStates.Paid, // simulation
-                PaidOn = DateTime.UtcNow,
+                PaymentStatus = isCard ? PaymentStates.Paid : PaymentStates.Unpaid,
+                PaidOn = isCard ? DateTime.UtcNow : null,
                 FullName = vm.FullName ?? "",
                 Email = vm.Email ?? "",
-                Phone = vm.Phone,
-                Address = vm.Address,
+                Phone = vm.Phone?.Trim(),
+                Address = $"{(vm.City ?? "").Trim()}, {(vm.Address ?? "").Trim()}".Trim().Trim(','),
                 Total = products.Sum(p => p.Price * cart[p.Id])
             };
 
@@ -239,7 +251,7 @@ namespace Bevera.Controllers
             {
                 OrderId = order.Id,
                 Status = OrderStates.Submitted,
-                Note = vm.PaymentMethod == "cash" ? "Плащане: наложен платеж (симулация, прието)." : "Плащане: карта (симулация, прието).",
+                Note = isCard ? "Плащане: карта (симулация, прието)." : "Плащане: наложен платеж (очаква се).",
                 ChangedAt = DateTime.UtcNow,
                 ChangedByUserId = userId
             });

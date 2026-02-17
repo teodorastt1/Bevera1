@@ -172,7 +172,9 @@
             <div class="col-lg-6">
                 <div class="p-body">
                     <h1 class="p-title">@Model.Name</h1>
-                    <div class="p-price">@Model.Price.ToString("0.00") лв.</div>
+                    <div class="p-price">
+                        @Model.Price.ToString("C")
+                    </div>
 
                     <div class="p-badges mb-2">
                         @if (inStock)

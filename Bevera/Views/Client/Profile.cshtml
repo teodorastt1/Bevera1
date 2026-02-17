@@ -6,7 +6,8 @@
 <div class="container py-4">
     <h2 class="mb-3" style="font-family:'Playfair Display',serif;">User Information</h2>
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card profile-card border-0 shadow-sm rounded-4 overflow-hidden">
+
         <div class="row g-0">
             <div class="col-md-4 p-4 border-end">
                 <div class="d-flex align-items-center gap-3">
@@ -20,7 +21,7 @@
                     </div>
                 </div>
 
-                <a class="btn btn-warning mt-3 rounded-pill fw-semibold" asp-area="Identity" asp-page="/Account/Manage/Index">
+                <a class="btn btn-warning mt-3 rounded-pill fw-semibold" asp-controller="Client" asp-action="EditProfile">
                     <i class="bi bi-pencil-square me-1"></i> Edit Details
                 </a>
             </div>
@@ -85,10 +86,14 @@
                                                 <td>@o.CreatedAt.ToString("dd.MM.yyyy")</td>
                                                 <td>@o.Total.ToString("0.00") лв.</td>
                                                 <td>
-                                                    <span class="badge bg-secondary">@o.Status</span>
+                                                    <partial name="_OrderStatusBadge" model="o.Status" />
                                                 </td>
                                                 <td class="text-end">
                                                     @* Клиентът потвърждава "Получена" само ако е Delivered *@
+                                                    <a class="btn btn-outline-dark btn-sm me-1" asp-controller="Client" asp-action="DownloadInvoice" asp-route-id="@o.OrderId">
+                                                        <i class="bi bi-receipt-cutoff me-1"></i> Фактура
+                                                    </a>
+
                                                     @if (o.Status == "Delivered")
                                                     {
                                                         <form asp-controller="Client" asp-action="ConfirmReceived" method="post" class="d-inline">

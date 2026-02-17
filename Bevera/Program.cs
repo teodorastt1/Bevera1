@@ -6,6 +6,11 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF;
 using QuestPDF.Infrastructure;
+using System.Globalization;
+
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +26,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddScoped<InvoiceService>();
+
+var cultureInfo = new CultureInfo("de-DE"); // евро формат
+
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
 
 // ✅ Identity + Roles (important)
 builder.Services

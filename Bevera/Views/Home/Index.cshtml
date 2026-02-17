@@ -1,4 +1,6 @@
-﻿@{
+﻿@model Bevera.Models.ViewModels.HomeIndexVm
+
+@{
     ViewData["Title"] = "Home";
     ViewData["BodyClass"] = "home";
 }
@@ -54,14 +56,89 @@
     </button>
 </div>
 
-<!-- ================= PLACEHOLDER (Most bought later) ================= -->
+<!-- ================= BEST SELLERS (HIT) ================= -->
 <section class="container my-5">
-    <div class="placeholder-block rounded-4 p-4 p-md-5">
-        <h2 class="section-title mb-2">Най-купувани</h2>
-        <p class="mb-0 text-muted">
-            Тук по-късно ще покажем най-купуваните артикули (карти с продукти).
-        </p>
+    <div class="d-flex align-items-end justify-content-between mb-3">
+        <div>
+            <h2 class="section-title mb-0">Най-продавани</h2>
+            <div class="text-muted">Хитовете, които се поръчват най-много.</div>
+        </div>
     </div>
+
+    @if (Model?.BestSellers == null || Model.BestSellers.Count == 0)
+    {
+        <div class="alert alert-light border">Още няма достатъчно поръчки, за да изчислим хитовете.</div>
+    }
+    else
+    {
+        <div class="cards-rail" data-rail="hits">
+            <button class="rail-arrow left" type="button" aria-label="Назад" onclick="railScroll('hits', -1)"><i class="bi bi-chevron-left"></i></button>
+            <div class="rail" id="rail-hits">
+                @foreach (var p in Model.BestSellers)
+                {
+                    <div class="rail-item">
+                        <a class="product-card" asp-controller="Client" asp-action="Product" asp-route-id="@p.Id">
+                            <div class="product-img position-relative">
+                                <span class="hit-badge">ХИТ</span>
+                                @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                                {
+                                    <img src="@p.ImagePath" alt="@p.Name" />
+                                }
+                            </div>
+                            <div class="product-body">
+                                <div class="product-name">@p.Name</div>
+                                <div class="product-price">@p.Price.ToString("0.00") лв.</div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+            <button class="rail-arrow right" type="button" aria-label="Напред" onclick="railScroll('hits', 1)"><i class="bi bi-chevron-right"></i></button>
+        </div>
+        <div class="rail-dots" id="dots-hits"></div>
+    }
+</section>
+
+<!-- ================= NEWEST ================= -->
+<section class="container my-5">
+    <div class="d-flex align-items-end justify-content-between mb-3">
+        <div>
+            <h2 class="section-title mb-0">Най-нови</h2>
+            <div class="text-muted">Последно добавени продукти в склада.</div>
+        </div>
+    </div>
+
+    @if (Model?.Newest == null || Model.Newest.Count == 0)
+    {
+        <div class="alert alert-light border">Няма продукти.</div>
+    }
+    else
+    {
+        <div class="cards-rail" data-rail="new">
+            <button class="rail-arrow left" type="button" aria-label="Назад" onclick="railScroll('new', -1)"><i class="bi bi-chevron-left"></i></button>
+            <div class="rail" id="rail-new">
+                @foreach (var p in Model.Newest)
+                {
+                    <div class="rail-item">
+                        <a class="product-card" asp-controller="Client" asp-action="Product" asp-route-id="@p.Id">
+                            <div class="product-img">
+                                @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                                {
+                                    <img src="@p.ImagePath" alt="@p.Name" />
+                                }
+                            </div>
+                            <div class="product-body">
+                                <div class="product-name">@p.Name</div>
+                                <div class="product-price">@p.Price.ToString("0.00") лв.</div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+            <button class="rail-arrow right" type="button" aria-label="Напред" onclick="railScroll('new', 1)"><i class="bi bi-chevron-right"></i></button>
+        </div>
+        <div class="rail-dots" id="dots-new"></div>
+    }
 </section>
 
 <!-- ================= FOOTER LIKE SCREENSHOT ================= -->
@@ -161,6 +238,87 @@
         font-weight: 700;
     }
 
+    /* cards rail */
+    .cards-rail {
+        position: relative;
+    }
+
+    .rail {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(220px, 1fr);
+        gap: 18px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding: 4px 44px 10px;
+        scrollbar-width: none;
+    }
+
+        .rail::-webkit-scrollbar {
+            display: none;
+        }
+
+    .rail-item {
+        scroll-snap-align: start;
+    }
+
+    .rail-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,.10);
+        background: rgba(255,255,255,.95);
+        box-shadow: 0 8px 18px rgba(0,0,0,.12);
+        display: grid;
+        place-items: center;
+        z-index: 2;
+    }
+
+        .rail-arrow.left {
+            left: 6px;
+        }
+
+        .rail-arrow.right {
+            right: 6px;
+        }
+
+    .rail-dots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .rail-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(0,0,0,.25);
+        cursor: pointer;
+    }
+
+        .rail-dot.active {
+            background: rgba(77, 21, 25, .95);
+            transform: scale(1.2);
+        }
+
+    .hit-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 6px 10px;
+        font-size: .75rem;
+        font-weight: 900;
+        letter-spacing: .06em;
+        border-radius: 10px;
+        background: #f5b301;
+        color: #111;
+        box-shadow: 0 10px 22px rgba(0,0,0,.12);
+    }
+
     /* footer like screenshot */
     .bevera-footer {
         background: #FAE3C6; /* светло зелено като примера */
@@ -214,3 +372,47 @@
         scroll-padding-top: 90px;
     }
 </style>
+
+@section Scripts {
+    <script>
+        function railScroll(key, dir) {
+            const rail = document.getElementById('rail-' + key);
+            if (!rail) return;
+            const card = rail.querySelector('.rail-item');
+            const step = card ? (card.getBoundingClientRect().width + 18) * 2 : 500;
+            rail.scrollBy({ left: dir * step, behavior: 'smooth' });
+        }
+
+        function setupDots(key) {
+            const rail = document.getElementById('rail-' + key);
+            const dots = document.getElementById('dots-' + key);
+            if (!rail || !dots) return;
+
+            const items = rail.querySelectorAll('.rail-item');
+            const pages = Math.max(1, Math.ceil(items.length / 4));
+            dots.innerHTML = '';
+
+            for (let i = 0; i < pages; i++) {
+                const d = document.createElement('div');
+                d.className = 'rail-dot' + (i === 0 ? ' active' : '');
+                d.addEventListener('click', () => {
+                    const card = rail.querySelector('.rail-item');
+                    const step = card ? (card.getBoundingClientRect().width + 18) * 4 : 900;
+                    rail.scrollTo({ left: i * step, behavior: 'smooth' });
+                });
+                dots.appendChild(d);
+            }
+
+            rail.addEventListener('scroll', () => {
+                const max = rail.scrollWidth - rail.clientWidth;
+                const ratio = max <= 0 ? 0 : rail.scrollLeft / max;
+                const idx = Math.min(pages - 1, Math.round(ratio * (pages - 1)));
+                dots.querySelectorAll('.rail-dot').forEach((x, j) => x.classList.toggle('active', j === idx));
+            });
+        }
+
+        setupDots('hits');
+        setupDots('new');
+        window.addEventListener('resize', () => { setupDots('hits'); setupDots('new'); });
+    </script>
+}

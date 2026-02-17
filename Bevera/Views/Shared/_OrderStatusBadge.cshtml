@@ -1,0 +1,32 @@
+@model string
+
+@{
+    var s = (Model ?? "").Trim();
+    var cls = s switch
+    {
+        "Submitted" => "bg-warning text-dark",
+        "Approved" => "bg-primary",
+        "Picking" => "bg-info text-dark",
+        "Shipped" => "bg-secondary",
+        "Delivered" => "bg-success",
+        "Received" => "bg-success",
+        "Cancelled" => "bg-danger",
+        "Draft" => "bg-light text-dark",
+        _ => "bg-dark"
+    };
+
+    var label = s switch
+    {
+        "Submitted" => "Подадена",
+        "Approved" => "Одобрена",
+        "Picking" => "Подготовка",
+        "Shipped" => "Изпратена",
+        "Delivered" => "Доставена",
+        "Received" => "Получена",
+        "Cancelled" => "Отказана",
+        "Draft" => "Чернова",
+        _ => s
+    };
+}
+
+<span class="badge rounded-pill @cls">@label</span>

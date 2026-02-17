@@ -5,7 +5,12 @@
     var subs = Model.Where(c => c.ParentCategoryId != null).ToList();
 }
 
-<div class="mega-menu">
+<div class="mega-menu" id="megaMenu">
+    <div class="mega-top">
+        <div class="mega-title">Категории</div>
+        <button type="button" class="mega-close" aria-label="Затвори">&times;</button>
+    </div>
+
     <div class="mega-content">
 
         @foreach (var main in mains)

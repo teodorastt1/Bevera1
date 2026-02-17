@@ -3,10 +3,12 @@ using Bevera.Helpers;
 using Bevera.Models;
 using Bevera.Models.Catalog;
 using Bevera.Models.ViewModels;
+using Bevera.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 using System.Security.Claims;
 
 namespace Bevera.Controllers
@@ -15,11 +17,13 @@ namespace Bevera.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly InvoiceService _invoiceService;
 
-        public ClientController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public ClientController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, InvoiceService invoiceService)
         {
             _db = db;
             _userManager = userManager;
+            _invoiceService = invoiceService;
         }
 
         // /Client/Category/8  (+ filters)
@@ -161,6 +165,34 @@ namespace Bevera.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
+        // Client invoice download (only own orders)
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> DownloadInvoice(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Challenge();
+
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id && o.ClientId == userId);
+            if (order == null) return NotFound();
+
+            if (string.IsNullOrEmpty(order.InvoiceStoredFileName))
+            {
+                await _invoiceService.GenerateInvoiceAsync(order.Id);
+                order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id && o.ClientId == userId);
+                if (order == null) return NotFound();
+            }
+
+            if (string.IsNullOrEmpty(order.InvoiceStoredFileName))
+                return StatusCode(500, "Неуспешно генериране на фактура.");
+
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "invoices", order.InvoiceStoredFileName);
+            if (!System.IO.File.Exists(path))
+                return NotFound("Фактурата липсва на сървъра.");
+
+            return PhysicalFile(path, order.InvoiceContentType ?? "application/pdf", order.InvoiceFileName ?? $"Invoice_{order.Id}.pdf");
+        }
+
 
         [Authorize]
         [HttpGet]
@@ -180,18 +212,18 @@ namespace Bevera.Controllers
                 Orders = new List<OrderRowVm>()
             };
 
-            // твоят Order модел няма CreatedAt -> ползваме ChangedAt
             if (_db.Orders != null)
             {
                 vm.Orders = await _db.Orders
                     .Where(o => o.ClientId == user.Id)
-                    .OrderByDescending(o => o.ChangedAt)
+                    .OrderByDescending(o => o.CreatedAt)
                     .Select(o => new OrderRowVm
                     {
                         OrderId = o.Id,
-                        CreatedAt = o.ChangedAt,
+                        CreatedAt = o.CreatedAt,
                         Total = o.Total,
-                        Status = o.Status
+                        Status = o.Status,
+                        HasInvoice = o.InvoiceStoredFileName != null
                     })
                     .ToListAsync();
             }
@@ -217,6 +249,51 @@ namespace Bevera.Controllers
         }
 
         [Authorize]
+        public async Task<IActionResult> EditProfile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var vm = new EditProfileVm
+            {
+                FirstName = user.FirstName ?? "",
+                LastName = user.LastName ?? "",
+                PhoneNumber = user.PhoneNumber ?? "",
+                Address = user.Address ?? ""
+            };
+
+            return View(vm);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(EditProfileVm vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            user.FirstName = vm.FirstName.Trim();
+            user.LastName = vm.LastName.Trim();
+            user.PhoneNumber = vm.PhoneNumber.Trim();
+            user.Address = vm.Address.Trim();
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("", "Неуспешно запазване. Опитай пак.");
+                return View(vm);
+            }
+
+            TempData["Msg"] = "Данните са обновени успешно.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+
+        [Authorize]
         [ValidateAntiForgeryToken]
         [HttpPost]
         public async Task<IActionResult> ToggleFavorite(int productId, string? returnUrl = null)
@@ -230,10 +307,14 @@ namespace Bevera.Controllers
             if (existing == null)
             {
                 _db.Favorites.Add(new Favorite { UserId = userId, ProductId = productId });
+                TempData["FlashMessage"] = "Добавено в Любими.";
+                TempData["FlashType"] = "success";
             }
             else
             {
                 _db.Favorites.Remove(existing);
+                TempData["FlashMessage"] = "Премахнато от Любими.";
+                TempData["FlashType"] = "warning";
             }
 
             await _db.SaveChangesAsync();
