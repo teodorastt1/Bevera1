@@ -5,6 +5,13 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Categories";
+
+    var pager = ViewBag.Pager as Bevera.Models.ViewModels.PaginationViewModel;
+
+    // Очакване: Model.Items съдържа mains + subs за текущата страница.
+    // Ако Model.Items идва само като "всички категории" paged, пак ще работи, но може да липсват subs.
+    var mains = Model.Items.Where(c => c.ParentCategoryId == null).ToList();
+    var subs = Model.Items.Where(c => c.ParentCategoryId != null).ToList();
 }
 
 <h2 class="mb-3">Categories</h2>
@@ -14,6 +21,7 @@
 </div>
 
 <table class="table table-bordered align-middle">
+
     <thead class="table-light">
         <tr>
             <th style="width:80px;">Image</th>
@@ -24,11 +32,6 @@
         </tr>
     </thead>
     <tbody>
-
-        @{
-            var mains = Model.Items.Where(c => c.ParentCategoryId == null).ToList();
-            var subs = Model.Items.Where(c => c.ParentCategoryId != null).ToList();
-        }
 
         @if (mains.Count == 0)
         {
@@ -52,9 +55,7 @@
                         }
                     </td>
 
-                    <td>
-                        <strong>@main.Name</strong>
-                    </td>
+                    <td><strong>@main.Name</strong></td>
 
                     <td>
                         @if (main.IsActive)
@@ -133,3 +134,11 @@
 
     </tbody>
 </table>
+
+
+
+@if (pager != null)
+{
+    <partial name="_Pagination" model="pager" />
+}
+

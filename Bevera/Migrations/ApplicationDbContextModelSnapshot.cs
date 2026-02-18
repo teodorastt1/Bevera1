@@ -219,6 +219,13 @@ namespace Bevera.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("DiscountEndsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 

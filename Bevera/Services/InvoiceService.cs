@@ -78,14 +78,14 @@ namespace Bevera.Services
                             foreach (var item in order.Items)
                             {
                                 table.Cell().Text(item.ProductName ?? item.Product?.Name ?? "Item");
-                                table.Cell().Text($"{item.UnitPrice:F2} лв.");
+                                table.Cell().Text($"{item.UnitPrice:F2} €");
                                 table.Cell().Text(item.Quantity.ToString());
-                                table.Cell().Text($"{item.LineTotal:F2} лв.");
+                                table.Cell().Text($"{item.LineTotal:F2} €");
                             }
                         });
 
                         col.Item().LineHorizontal(1);
-                        col.Item().AlignRight().Text($"Grand Total: {order.Total:F2} лв.").FontSize(14).SemiBold();
+                        col.Item().AlignRight().Text($"Grand Total: {order.Total:F2} €").FontSize(14).SemiBold();
                     });
 
                     page.Footer().AlignCenter().Text("Bevera - Thank you!").FontSize(10);

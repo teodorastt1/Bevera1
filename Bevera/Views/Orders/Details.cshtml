@@ -28,7 +28,7 @@
                     <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
                         <span class="badge bg-secondary p-2">Status: @Model.Status</span>
                         <span class="badge @(Model.PaymentStatus == PaymentStates.Paid ? "bg-success" : "bg-warning text-dark") p-2">Payment: @Model.PaymentStatus</span>
-                        <span class="ms-auto fw-bold">Total: @Model.Total.ToString("0.00") лв.</span>
+                        <span class="ms-auto fw-bold">Total: @Model.Total.ToString("0.00") €</span>
                     </div>
 
                     <div class="d-flex flex-wrap gap-2 mb-3">
@@ -97,9 +97,9 @@
                             {
                                 <tr>
                                     <td>@it.ProductName</td>
-                                    <td>@it.UnitPrice.ToString("0.00")</td>
+                                        <td>@it.UnitPrice.ToString("0.00")€</td>
                                     <td>@it.Quantity</td>
-                                    <td>@it.LineTotal.ToString("0.00")</td>
+                                        <td>@it.LineTotal.ToString("0.00")€</td>
                                 </tr>
                             }
                             </tbody>

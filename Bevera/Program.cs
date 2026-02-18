@@ -45,7 +45,32 @@ builder.Services.AddRazorPages();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+
+// Session cookie is essential (cart + auth flows)
+builder.Services.AddSession(options =>
+{
+    options.Cookie.IsEssential = true;
+});
+
+// Identity cookie is essential (login)
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.IsEssential = true;
+});
+
+// Anti-forgery cookie is essential (POST forms)
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.IsEssential = true;
+});
+
+// ✅ Cookie consent / policy
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    // If true -> non-essential cookies require explicit consent.
+    options.CheckConsentNeeded = context => true;
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+});
 
 var app = builder.Build();
 
@@ -72,6 +97,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// ✅ Must be before auth/session so cookies are governed correctly.
+app.UseCookiePolicy();
 
 app.UseAuthentication();
 app.UseAuthorization();

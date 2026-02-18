@@ -149,7 +149,7 @@
                         </div>
 
                         <button class="btn btn-dark w-100 mt-2 py-2 rounded-4" type="submit">
-                            Потвърди (@Model.Total.ToString("0.00") лв.)
+                            Потвърди (@Model.Total.ToString("0.00") €)
                         </button>
                     </form>
                 </div>
@@ -174,14 +174,14 @@
                                     <tr>
                                         <td>
                                             <div class="fw-semibold">@i.Name</div>
-                                            <div class="text-muted small">@i.Quantity x @i.UnitPrice.ToString("0.00") лв.</div>
+                                            <div class="text-muted small">@i.Quantity x @i.UnitPrice.ToString("0.00") €</div>
                                         </td>
-                                        <td class="text-end fw-bold">@i.Total.ToString("0.00") лв.</td>
+                                        <td class="text-end fw-bold">@i.Total.ToString("0.00") €</td>
                                     </tr>
                                 }
                                 <tr>
                                     <td class="fw-bold">Общо</td>
-                                    <td class="text-end fw-bold">@Model.Total.ToString("0.00") лв.</td>
+                                    <td class="text-end fw-bold">@Model.Total.ToString("0.00") €</td>
                                 </tr>
                             </tbody>
                         </table>

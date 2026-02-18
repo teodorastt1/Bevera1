@@ -325,6 +325,48 @@ namespace Bevera.Controllers
             return RedirectToAction(nameof(Favorites));
         }
 
+        // GET: /Client/OrderDetails/5
+        [HttpGet]
+        public async Task<IActionResult> OrderDetails(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var order = await _db.Orders
+                .AsNoTracking()
+                .Include(o => o.Items)
+                    .ThenInclude(oi => oi.Product)
+                        .ThenInclude(p => p.Images)
+                .FirstOrDefaultAsync(o => o.Id == id && o.ClientId == userId); // <-- смени ClientUserId с твоето поле
+
+            if (order == null)
+                return NotFound();
+
+            var vm = new OrderDetailsViewModel
+            {
+                OrderId = order.Id,
+                CreatedAt = order.CreatedAt,
+                Status = order.Status.ToString(),
+                Items = order.Items.Select(oi => new OrderDetailsItemViewModel
+                {
+                    ProductId = oi.ProductId,
+                    Name = oi.Product.Name,
+                    ImageUrl = oi.Product.Images
+                        .OrderByDescending(img => img.IsMain)
+                        .ThenBy(img => img.Id)
+                        .Select(img => img.ImagePath)
+                        .FirstOrDefault()
+                        ?? "/img/no-image.png",
+                    UnitPrice = oi.UnitPrice,
+                    Quantity = oi.Quantity
+                }).ToList()
+            };
+
+            vm.Total = vm.Items.Sum(x => x.LineTotal);
+
+            return View(vm);
+        }
+
+
 
     }
 }

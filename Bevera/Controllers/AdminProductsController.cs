@@ -21,7 +21,7 @@ namespace Bevera.Controllers
         }
 
         // GET: /AdminProducts
-        public async Task<IActionResult> Index(string? q, int? categoryId, string? stock, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string? q, int? categoryId, string? stock, int page = 1, int pageSize = 6)
         {
             ViewBag.Q = q;
             ViewBag.CategoryId = categoryId;
@@ -119,6 +119,8 @@ namespace Bevera.Controllers
                 Name = vm.Name.Trim(),
                 Description = vm.Description?.Trim(),
                 Price = vm.Price,
+                DiscountPercent = vm.DiscountPercent,
+                DiscountEndsAt = vm.DiscountEndsAt,
                 CategoryId = vm.CategoryId,
                 StockQty = vm.StockQty,
                 LowStockThreshold = vm.LowStockThreshold,
@@ -162,6 +164,8 @@ namespace Bevera.Controllers
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
+                DiscountPercent = product.DiscountPercent,
+                DiscountEndsAt = product.DiscountEndsAt,
                 CategoryId = product.CategoryId,
                 StockQty = product.StockQty,
                 LowStockThreshold = product.LowStockThreshold,
@@ -198,6 +202,8 @@ namespace Bevera.Controllers
             product.Name = vm.Name.Trim();
             product.Description = vm.Description?.Trim();
             product.Price = vm.Price;
+            product.DiscountPercent = vm.DiscountPercent;
+            product.DiscountEndsAt = vm.DiscountEndsAt;
             product.CategoryId = vm.CategoryId;
             product.StockQty = vm.StockQty;
             product.LowStockThreshold = vm.LowStockThreshold;

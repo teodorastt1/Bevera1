@@ -17,9 +17,21 @@
         </div>
 
         <div class="col-md-3">
-            <label class="form-label">Price (лв.)</label>
+            <label class="form-label">Price (€)</label>
             <input asp-for="Price" class="form-control" />
             <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Discount % (optional)</label>
+            <input asp-for="DiscountPercent" class="form-control" />
+            <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Discount ends (optional)</label>
+            <input asp-for="DiscountEndsAt" class="form-control" type="datetime-local" />
+            <span asp-validation-for="DiscountEndsAt" class="text-danger"></span>
         </div>
 
         <div class="col-md-3">

@@ -15,130 +15,126 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Bevera.styles.css" asp-append-version="true" />
 
-
-
     <style>
-        :root {
-            --bevera-accent: #f5b301;
-            --bevera-dark: rgba(10, 12, 14, .65);
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-        }
-
-        .bevera-navbar {
-            background: var(--bevera-dark);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-
-            .bevera-navbar .navbar-brand {
-                font-family: 'Playfair Display', serif;
-                font-weight: 700;
-                color: #fff !important;
-                font-size: 1.6rem;
-                letter-spacing: .5px;
+            :root {
+                --bevera-accent: #f5b301;
+                --bevera-dark: rgba(10, 12, 14, .65);
             }
 
-            .bevera-navbar .nav-link {
-                color: rgba(255,255,255,.85) !important;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: .08em;
-                font-size: .9rem;
-                padding: .75rem 1rem;
+            body {
+                font-family: 'Poppins', sans-serif;
+                margin: 0;
             }
 
-                .bevera-navbar .nav-link:hover {
+            .bevera-navbar {
+                background: var(--bevera-dark);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-bottom: 1px solid rgba(255,255,255,.08);
+            }
+
+                .bevera-navbar .navbar-brand {
+                    font-family: 'Playfair Display', serif;
+                    font-weight: 700;
                     color: #fff !important;
+                    font-size: 1.6rem;
+                    letter-spacing: .5px;
                 }
 
-        .page-content {
-            padding-top: 72px;
-        }
-
-        body.home .page-content {
-            padding-top: 0;
-        }
-
-        /* Search */
-        .bevera-search {
-            width: 280px;
-            max-width: 42vw;
-        }
-
-            .bevera-search input {
-                border-radius: 999px;
-                background: rgba(255,255,255,.10);
-                border: 1px solid rgba(255,255,255,.18);
-                color: #fff;
-            }
-
-                .bevera-search input::placeholder {
-                    color: rgba(255,255,255,.65);
+                .bevera-navbar .nav-link {
+                    color: rgba(255,255,255,.85) !important;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: .08em;
+                    font-size: .9rem;
+                    padding: .75rem 1rem;
                 }
 
-            .bevera-search button {
-                border-radius: 999px;
-                background: var(--bevera-accent);
-                border: 0;
-                font-weight: 800;
+                    .bevera-navbar .nav-link:hover {
+                        color: #fff !important;
+                    }
+
+            .page-content {
+                padding-top: 72px;
             }
 
-        /* Mega menu */
-        .bevera-mega-menu {
-            padding: 18px;
-            border-radius: 18px;
-            border: 1px solid rgba(0,0,0,.08);
-            box-shadow: 0 18px 45px rgba(0,0,0,.18);
-            max-width: 980px;
-            width: calc(100vw - 24px);
-            margin: 10px auto 0;
-        }
-
-        .mega-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(180px, 1fr));
-            gap: 10px;
-        }
-
-        .mega-link {
-            display: block;
-            padding: 10px 12px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #111;
-            font-weight: 600;
-        }
-
-            .mega-link:hover {
-                background: rgba(245,179,1,.16);
+            body.home .page-content {
+                padding-top: 0;
             }
 
-        /* IMPORTANT: desktop hover open (Razor needs @@media) */
-        @@media (min-width: 992px) {
-            .bevera-dropdown:hover > .dropdown-menu {
-                display: block;
-            }
-        }
-
-        @@media (max-width: 991px) {
-            .mega-grid {
-                grid-template-columns: repeat(2, minmax(160px, 1fr));
-            }
-
+            /* Search */
             .bevera-search {
-                width: 100%;
-                max-width: 100%;
+                width: 280px;
+                max-width: 42vw;
             }
-        }
+
+                .bevera-search input {
+                    border-radius: 999px;
+                    background: rgba(255,255,255,.10);
+                    border: 1px solid rgba(255,255,255,.18);
+                    color: #fff;
+                }
+
+                    .bevera-search input::placeholder {
+                        color: rgba(255,255,255,.65);
+                    }
+
+                .bevera-search button {
+                    border-radius: 999px;
+                    background: var(--bevera-accent);
+                    border: 0;
+                    font-weight: 800;
+                }
+
+            /* Mega menu */
+            .bevera-mega-menu {
+                padding: 18px;
+                border-radius: 18px;
+                border: 1px solid rgba(0,0,0,.08);
+                box-shadow: 0 18px 45px rgba(0,0,0,.18);
+                max-width: 980px;
+                width: calc(100vw - 24px);
+                margin: 10px auto 0;
+            }
+
+            .mega-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(180px, 1fr));
+                gap: 10px;
+            }
+
+            .mega-link {
+                display: block;
+                padding: 10px 12px;
+                border-radius: 12px;
+                text-decoration: none;
+                color: #111;
+                font-weight: 600;
+            }
+
+                .mega-link:hover {
+                    background: rgba(245,179,1,.16);
+                }
+
+            /* IMPORTANT: desktop hover open (Razor needs @@media) */
+            @@media (min-width: 992px) {
+                .bevera-dropdown:hover > .dropdown-menu {
+                    display: block;
+                }
+            }
+
+            @@media (max-width: 991px) {
+                .mega-grid {
+                    grid-template-columns: repeat(2, minmax(160px, 1fr));
+                }
+
+                .bevera-search {
+                    width: 100%;
+                    max-width: 100%;
+                }
+            }
     </style>
 </head>
-
-
 
 <body class="@(ViewData["BodyClass"] ?? "")">
 
@@ -160,12 +156,11 @@
                         </li>
 
                         <li class="nav-item mega-wrapper" id="megaWrapper">
-                            <a class="nav-link mega-toggle" href="#" onclick="return false;" aria-haspopup="true" aria-expanded="false">ПО КАТЕГОРИИ <span class="ms-1">▾</span></a>
+                            <a class="nav-link mega-toggle" href="#" onclick="return false;" aria-haspopup="true" aria-expanded="false">
+                                ПО КАТЕГОРИИ <span class="ms-1">▾</span>
+                            </a>
                             @await Component.InvokeAsync("CategoriesMenu")
                         </li>
-
-
-
 
                         <li class="nav-item">
                             <a class="nav-link" href="/#footer">About</a>
@@ -183,7 +178,6 @@
                         </button>
                     </form>
 
-                    <!-- RIGHT ICONS + LOGIN/REGISTER -->
                     <div class="d-flex align-items-center">
                         <partial name="_LoginPartial" />
                     </div>
@@ -192,34 +186,6 @@
             </div>
         </nav>
     </header>
-
-    <script>
-        (async function () {
-            try {
-                const res = await fetch('/Cart/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                const data = await res.json();
-
-                const badge = document.getElementById('cartBadge');
-                if (!badge) return;
-
-                const count = Number(data.count || 0);
-                if (count > 0) {
-                    badge.textContent = count;
-                    badge.classList.remove('d-none');
-
-                    // ако току-що е добавено (TempData)
-                    const shouldPulse = '@(TempData["CartPulse"] != null ? "1" : "0")';
-                    if (shouldPulse === "1") {
-                        badge.classList.add('pulse');
-                        setTimeout(() => badge.classList.remove('pulse'), 600);
-                    }
-                } else {
-                    badge.classList.add('d-none');
-                }
-            } catch (e) { }
-        })();
-    </script>
-
 
     <main class="page-content">
         @* JS flash messages *@
@@ -241,11 +207,59 @@
         @RenderBody()
     </main>
 
-	@await Component.InvokeAsync("DeliveredOrdersToast")
+    @await Component.InvokeAsync("DeliveredOrdersToast")
+
+    <!-- ✅ Toast container MUST be inside body -->
+    <div id="bevera-toast" class="bevera-toast" aria-live="polite" aria-atomic="true"></div>
+
+    @* Cookie consent banner *@
+    <partial name="_CookieConsent" />
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+            // ✅ Global toast helper (use anywhere)
+            function showToast(message, type = "info") {
+                const toast = document.getElementById("bevera-toast");
+                if (!toast) return;
+
+                toast.className = "bevera-toast show " + type;
+                toast.textContent = message;
+
+                clearTimeout(window.__beveraToastTimer);
+                window.__beveraToastTimer = setTimeout(() => {
+                    toast.classList.remove("show");
+                }, 4000);
+            }
+
+            // cart badge loader (as you had it)
+            (async function () {
+                try {
+                    const res = await fetch('/Cart/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    const data = await res.json();
+
+                    const badge = document.getElementById('cartBadge');
+                    if (!badge) return;
+
+                    const count = Number(data.count || 0);
+                    if (count > 0) {
+                        badge.textContent = count;
+                        badge.classList.remove('d-none');
+
+                        const shouldPulse = '@(TempData["CartPulse"] != null ? "1" : "0")';
+                        if (shouldPulse === "1") {
+                            badge.classList.add('pulse');
+                            setTimeout(() => badge.classList.remove('pulse'), 600);
+                        }
+                    } else {
+                        badge.classList.add('d-none');
+                    }
+                } catch (e) { }
+            })();
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

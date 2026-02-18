@@ -48,7 +48,7 @@ namespace Bevera.Controllers
                     ProductId = p.Id,
                     Name = p.Name,
                     ImagePath = img,
-                    UnitPrice = p.Price,
+                    UnitPrice = p.EffectivePrice,
                     Quantity = cart[p.Id]
                 };
             }).OrderBy(i => i.Name).ToList();
@@ -59,13 +59,38 @@ namespace Bevera.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Add(int productId, int qty = 1, string? returnUrl = null)
+        public async Task<IActionResult> Add(int productId, int qty = 1, string? returnUrl = null)
         {
             if (qty < 1) qty = 1;
 
+            var product = await _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+            if (product == null)
+            {
+                TempData["FlashMessage"] = "Продуктът не е намерен.";
+                TempData["FlashType"] = "danger";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var available = product.Quantity > 0 ? product.Quantity : product.StockQty;
+            if (available <= 0)
+            {
+                TempData["FlashMessage"] = $"{product.Name} в момента не е наличен.";
+                TempData["FlashType"] = "danger";
+                return !string.IsNullOrWhiteSpace(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Index));
+            }
+
             var cart = GetCart();
-            if (cart.ContainsKey(productId)) cart[productId] += qty;
-            else cart[productId] = qty;
+            var current = cart.ContainsKey(productId) ? cart[productId] : 0;
+            var desired = current + qty;
+
+            if (desired > available)
+            {
+                desired = available;
+                TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Налично: {available}.";
+                TempData["FlashType"] = "danger";
+            }
+
+            cart[productId] = desired;
 
             SaveCart(cart);
 
@@ -80,14 +105,43 @@ namespace Bevera.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Update(int productId, int qty)
+        public async Task<IActionResult> Update(int productId, int qty)
         {
             var cart = GetCart();
 
             if (qty <= 0)
                 cart.Remove(productId);
             else
-                cart[productId] = qty;
+            {
+                var product = await _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+                if (product == null)
+                {
+                    cart.Remove(productId);
+                    TempData["FlashMessage"] = "Продуктът вече не е наличен.";
+                    TempData["FlashType"] = "danger";
+                }
+                else
+                {
+                    var available = product.Quantity > 0 ? product.Quantity : product.StockQty;
+                    if (available <= 0)
+                    {
+                        cart.Remove(productId);
+                        TempData["FlashMessage"] = $"{product.Name} в момента не е наличен.";
+                        TempData["FlashType"] = "danger";
+                    }
+                    else
+                    {
+                        if (qty > available)
+                        {
+                            qty = available;
+                            TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Налично: {available}.";
+                            TempData["FlashType"] = "danger";
+                        }
+
+                        cart[productId] = qty;
+                    }
+                }
+            }
 
             SaveCart(cart);
             return RedirectToAction("Index");
@@ -134,7 +188,7 @@ namespace Bevera.Controllers
             {
                 ProductId = p.Id,
                 Name = p.Name,
-                UnitPrice = p.Price,
+                UnitPrice = p.EffectivePrice,
                 Quantity = cart[p.Id]
             }).ToList();
 
@@ -181,7 +235,7 @@ namespace Bevera.Controllers
                 {
                     ProductId = p.Id,
                     Name = p.Name,
-                    UnitPrice = p.Price,
+                    UnitPrice = p.EffectivePrice,
                     Quantity = cart[p.Id]
                 }).ToList();
                 vm.Total = vm.Items.Sum(i => i.Total);
@@ -212,7 +266,7 @@ namespace Bevera.Controllers
                 Email = vm.Email ?? "",
                 Phone = vm.Phone?.Trim(),
                 Address = $"{(vm.City ?? "").Trim()}, {(vm.Address ?? "").Trim()}".Trim().Trim(','),
-                Total = products.Sum(p => p.Price * cart[p.Id])
+                Total = products.Sum(p => p.EffectivePrice * cart[p.Id])
             };
 
             _db.Orders.Add(order);
@@ -228,8 +282,8 @@ namespace Bevera.Controllers
                     ProductId = p.Id,
                     ProductName = p.Name,
                     Quantity = qty,
-                    UnitPrice = p.Price,
-                    LineTotal = p.Price * qty
+                    UnitPrice = p.EffectivePrice,
+                    LineTotal = p.EffectivePrice * qty
                 });
 
                 if (p.Quantity > 0) p.Quantity -= qty;

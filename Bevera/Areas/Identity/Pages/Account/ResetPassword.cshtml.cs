@@ -1,117 +1,99 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
-
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using System.ComponentModel.DataAnnotations;
+using Bevera.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace Bevera.Areas.Identity.Pages.Account
 {
     public class ResetPasswordModel : PageModel
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public ResetPasswordModel(UserManager<IdentityUser> userManager)
+        public ResetPasswordModel(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
-        public InputModel Input { get; set; }
+        public InputModel Input { get; set; } = new();
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
+            [Required, EmailAddress]
+            public string Email { get; set; } = "";
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            public string Password { get; set; }
+            [StringLength(100, ErrorMessage = "Паролата трябва да е поне {2} символа.", MinimumLength = 6)]
+            public string Password { get; set; } = "";
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-            public string ConfirmPassword { get; set; }
-
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
-            public string Code { get; set; }
-
+            [DataType(DataType.Password)]
+            [Compare(nameof(Password), ErrorMessage = "Паролите не съвпадат.")]
+            public string ConfirmPassword { get; set; } = "";
         }
 
-        public IActionResult OnGet(string code = null)
+        public async Task<IActionResult> OnGetAsync(string? email = null)
         {
-            if (code == null)
+            // ако е логнат -> auto-fill email
+            if (User?.Identity?.IsAuthenticated == true)
             {
-                return BadRequest("A code must be supplied for password reset.");
-            }
-            else
-            {
-                Input = new InputModel
-                {
-                    Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code))
-                };
+                var u = await _userManager.GetUserAsync(User);
+                Input.Email = u?.Email ?? "";
                 return Page();
             }
+
+            // ако идва от Login с ?email=
+            if (!string.IsNullOrWhiteSpace(email))
+                Input.Email = email.Trim();
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
-            {
                 return Page();
-            }
 
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                // Don't reveal that the user does not exist
-                return RedirectToPage("./ResetPasswordConfirmation");
+                ModelState.AddModelError(string.Empty, "Няма потребител с този имейл.");
+                return Page();
             }
 
-            var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
-            if (result.Succeeded)
+            // DEMO reset без token: Remove + Add password
+            if (await _userManager.HasPasswordAsync(user))
             {
-                return RedirectToPage("./ResetPasswordConfirmation");
+                var removeRes = await _userManager.RemovePasswordAsync(user);
+                if (!removeRes.Succeeded)
+                {
+                    foreach (var e in removeRes.Errors)
+                        ModelState.AddModelError(string.Empty, e.Description);
+                    return Page();
+                }
             }
 
-            foreach (var error in result.Errors)
+            var addRes = await _userManager.AddPasswordAsync(user, Input.Password);
+            if (!addRes.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                foreach (var e in addRes.Errors)
+                    ModelState.AddModelError(string.Empty, e.Description);
+                return Page();
             }
-            return Page();
+
+            if (User?.Identity?.IsAuthenticated == true)
+                await _signInManager.RefreshSignInAsync(user);
+
+            TempData["FlashMessage"] = "Успешно сменихте паролата си.";
+            TempData["FlashType"] = "success";
+
+            return RedirectToPage("./ResetPasswordConfirmation");
         }
     }
 }

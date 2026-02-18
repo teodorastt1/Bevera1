@@ -17,6 +17,12 @@ namespace Bevera.Models.ViewModels
         [Range(0, 999999)]
         public decimal Price { get; set; }
 
+        // ✅ Promotion (requires migration)
+        [Range(0, 90)]
+        public decimal? DiscountPercent { get; set; }
+
+        public DateTime? DiscountEndsAt { get; set; }
+
         [Required]
         public int CategoryId { get; set; }
 

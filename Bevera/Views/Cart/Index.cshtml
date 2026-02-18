@@ -7,11 +7,11 @@
 
 <style>
     :root {
-        --c1: #A1937E; /* Weather Board */
-        --c2: #594836; /* Brown Derby */
-        --c3: #4D1519; /* Maroon Oak */
-        --c4: #301413; /* Seal Brown */
-        --c5: #170704; /* Soy Sauce */
+        --c1: #A1937E;
+        --c2: #594836;
+        --c3: #4D1519;
+        --c4: #301413;
+        --c5: #170704;
     }
 
     .cart-title {
@@ -116,7 +116,7 @@
                                 <td>
                                     <img src="@item.ImagePath" alt="@item.Name" style="width:70px;height:70px;object-fit:contain;" />
                                 </td>
-                                <td>@item.UnitPrice.ToString("0.00") лв.</td>
+                                <td>@item.UnitPrice.ToString("0.00") €</td>
                                 <td>
                                     <div class="qty-box">
                                         <form asp-controller="Cart" asp-action="Update" method="post" class="m-0">
@@ -136,7 +136,7 @@
                                         </form>
                                     </div>
                                 </td>
-                                <td class="fw-semibold">@item.Total.ToString("0.00") лв.</td>
+                                <td class="fw-semibold">@item.Total.ToString("0.00") €</td>
                                 <td class="text-end">
                                     <form asp-controller="Cart" asp-action="Remove" method="post" class="m-0">
                                         @Html.AntiForgeryToken()
@@ -152,7 +152,7 @@
 
             <div class="d-flex justify-content-end mt-3">
                 <div class="fw-semibold" style="color:var(--c2);">
-                    Grand Total : <span style="color:var(--c3);">@grand.ToString("0.00") лв.</span>
+                    Grand Total : <span style="color:var(--c3);">@grand.ToString("0.00") €</span>
                 </div>
             </div>
 

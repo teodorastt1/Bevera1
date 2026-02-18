@@ -64,7 +64,7 @@
                         <td>
                             <span class="badge @(o.PaymentStatus == PaymentStates.Paid ? "bg-success" : "bg-warning text-dark")">@o.PaymentStatus</span>
                         </td>
-                        <td>@o.Total.ToString("0.00") лв.</td>
+                            <td>@o.Total.ToString("0.00") €</td>
                         <td class="text-muted">@o.ChangedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@o.Id">

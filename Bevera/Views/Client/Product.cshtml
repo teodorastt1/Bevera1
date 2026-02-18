@@ -3,9 +3,9 @@
 @{
     ViewData["Title"] = Model.Name;
 
-    var inStock = Model.StockQty > 0;
+    var available = (Model.Quantity > 0 ? Model.Quantity : Model.StockQty);
+    var inStock = available > 0;
 
-    // Ако имаш Images навързани – взима main, иначе първата, иначе placeholder
     var imageSrc =
         Model.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
         ?? Model.Images?.FirstOrDefault()?.ImagePath
@@ -14,11 +14,11 @@
 
 <style>
     :root {
-        --bb: #2B0C0C; /* Black Bean */
-        --or: #C3766F; /* Old Rose */
-        --cc: #4A070C; /* Chocolate Cosmos */
-        --pb: #A9B9C7; /* Powder Blue */
-        --cr: #AD0B16; /* Cornell Red */
+        --bb: #2B0C0C;
+        --or: #C3766F;
+        --cc: #4A070C;
+        --pb: #A9B9C7;
+        --cr: #AD0B16;
     }
 
     .p-wrap {
@@ -70,13 +70,6 @@
         margin-bottom: 14px;
     }
 
-    .p-badges .badge {
-        border-radius: 999px;
-        padding: .5rem .75rem;
-        font-weight: 700;
-        letter-spacing: .02em;
-    }
-
     .badge-in {
         background: rgba(169,185,199,.55);
         color: var(--bb);
@@ -89,20 +82,6 @@
         border: 1px solid rgba(173,11,22,.25);
     }
 
-    .p-desc-title {
-        font-size: .85rem;
-        font-weight: 800;
-        color: rgba(43,12,12,.70);
-        letter-spacing: .10em;
-        text-transform: uppercase;
-        margin: 16px 0 6px;
-    }
-
-    .p-desc {
-        color: rgba(43,12,12,.80);
-        margin: 0;
-    }
-
     .p-actions {
         display: flex;
         gap: 10px;
@@ -111,34 +90,11 @@
         margin-top: 18px;
     }
 
-    .btn-soft {
+    .btn-soft, .btn-fav {
         border-radius: 999px;
         padding: .55rem 1rem;
         font-weight: 800;
-        border: 1px solid rgba(43,12,12,.18);
-        background: #fff;
-        color: var(--bb);
     }
-
-        .btn-soft:hover {
-            background: rgba(169,185,199,.25);
-            border-color: rgba(43,12,12,.28);
-            color: var(--bb);
-        }
-
-    .btn-fav {
-        border-radius: 999px;
-        padding: .55rem 1rem;
-        font-weight: 900;
-        border: 1px solid rgba(173,11,22,.35);
-        background: rgba(173,11,22,.06);
-        color: var(--cr);
-    }
-
-        .btn-fav:hover {
-            background: rgba(173,11,22,.12);
-            color: var(--cr);
-        }
 
     .btn-buy {
         border-radius: 999px;
@@ -149,10 +105,6 @@
         color: #fff;
         box-shadow: 0 10px 22px rgba(173,11,22,.22);
     }
-
-        .btn-buy:hover {
-            filter: brightness(.95);
-        }
 
     .p-note {
         margin-top: 14px;
@@ -165,15 +117,31 @@
 <div class="container p-wrap">
     <div class="p-card">
         <div class="row g-0">
-            <div class="col-lg-6 p-img">
+            <div class="col-lg-6 p-img position-relative">
                 <img src="@imageSrc" alt="@Model.Name" />
+
+                @if (User.IsInRole("Client") && available > 0 && available < 10)
+                {
+                    <span class="position-absolute top-0 start-0 m-3 badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill shadow-sm">
+                        Ниска наличност
+                    </span>
+                }
             </div>
 
             <div class="col-lg-6">
                 <div class="p-body">
                     <h1 class="p-title">@Model.Name</h1>
                     <div class="p-price">
-                        @Model.Price.ToString("C")
+                        @if (Model.DiscountPercent.HasValue && Model.DiscountPercent.Value > 0 && (!Model.DiscountEndsAt.HasValue || Model.DiscountEndsAt.Value >= DateTime.UtcNow))
+                        {
+                            <span class="text-decoration-line-through text-muted me-2" style="font-size:1.05rem; font-weight:700;">@Model.Price.ToString("0.00") €</span>
+                            <span>@Model.EffectivePrice.ToString("0.00") €</span>
+                        }
+                        else
+                        {
+                            @Model.Price.ToString("0.00")
+                            <text> €</text>
+                        }
                     </div>
 
                     <div class="p-badges mb-2">
@@ -208,9 +176,9 @@
                         else
                         {
                             <a class="btn btn-fav"
-                               asp-area="Identity"
-                               asp-page="/Account/Login"
-                               asp-route-returnUrl="@Context.Request.Path">
+                                   asp-area="Identity"
+                                   asp-page="/Account/Login"
+                                   asp-route-returnUrl="@Context.Request.Path">
                                 <i class="bi bi-heart me-1"></i> Добави в любими
                             </a>
                         }
@@ -229,14 +197,13 @@
                         else
                         {
                             <a class="btn btn-buy @(inStock ? "" : "disabled")"
-                               asp-area="Identity"
-                               asp-page="/Account/Login"
-                               asp-route-returnUrl="@Context.Request.Path">
+                                   asp-area="Identity"
+                                   asp-page="/Account/Login"
+                                   asp-route-returnUrl="@Context.Request.Path">
                                 <i class="bi bi-cart-plus me-1"></i> Купи
                             </a>
                         }
                     </div>
-
 
                     <div class="p-note">
                         @(inStock ? "Натисни “Купи” и продуктът влиза директно в количката." : "В момента няма наличност.")

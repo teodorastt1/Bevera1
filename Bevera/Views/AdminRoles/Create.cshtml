@@ -1,0 +1,75 @@
+@model Bevera.Models.ViewModels.CreateUserViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Създай потребител";
+}
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="mb-1">@ViewData["Title"]</h1>
+        <div class="text-muted small">Създава нов потребител и избира роля.</div>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-4">
+        <form method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Парола</label>
+                    <input asp-for="Password" class="form-control" type="password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Име</label>
+                    <input asp-for="FirstName" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Фамилия</label>
+                    <input asp-for="LastName" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Телефон</label>
+                    <input asp-for="PhoneNumber" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Адрес</label>
+                    <input asp-for="Address" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Роля</label>
+                    <select asp-for="RoleName" class="form-select" asp-items="Model.Roles">
+                        <option value="">(без роля)</option>
+                    </select>
+                    <span asp-validation-for="RoleName" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-success">Create</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

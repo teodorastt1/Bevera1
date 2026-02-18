@@ -1,0 +1,56 @@
+@model Bevera.Models.ViewModels.UserRoleRowViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Детайли за потребител";
+    var createdAt = ViewBag.CreatedAt as DateTime?;
+}
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="mb-1">@ViewData["Title"]</h1>
+        <div class="text-muted small">@Model.Email</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-primary">Edit role</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-4">
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="text-muted small">Email</div>
+                <div class="fw-semibold">@Model.Email</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Роля</div>
+                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.RoleName) ? "(няма)" : Model.RoleName)</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Име</div>
+                <div class="fw-semibold">@Model.FirstName @Model.LastName</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Регистрация</div>
+                <div class="fw-semibold">@(createdAt.HasValue ? createdAt.Value.ToString("dd.MM.yyyy") : "-")</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Телефон</div>
+                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "-" : Model.PhoneNumber)</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Адрес</div>
+                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.Address) ? "-" : Model.Address)</div>
+            </div>
+        </div>
+
+    </div>
+</div>

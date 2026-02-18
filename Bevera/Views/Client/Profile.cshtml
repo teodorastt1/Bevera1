@@ -84,13 +84,23 @@
                                             <tr>
                                                 <td class="fw-semibold">#@o.OrderId</td>
                                                 <td>@o.CreatedAt.ToString("dd.MM.yyyy")</td>
-                                                <td>@o.Total.ToString("0.00") лв.</td>
+                                                <td>@o.Total.ToString("0.00") €</td>
                                                 <td>
                                                     <partial name="_OrderStatusBadge" model="o.Status" />
                                                 </td>
                                                 <td class="text-end">
-                                                    @* Клиентът потвърждава "Получена" само ако е Delivered *@
-                                                    <a class="btn btn-outline-dark btn-sm me-1" asp-controller="Client" asp-action="DownloadInvoice" asp-route-id="@o.OrderId">
+
+                                                    <a class="btn btn-outline-primary btn-sm me-1"
+                                                           asp-controller="Client"
+                                                           asp-action="OrderDetails"
+                                                           asp-route-id="@o.OrderId">
+                                                        <i class="bi bi-eye me-1"></i> Детайли
+                                                    </a>
+
+                                                    <a class="btn btn-outline-dark btn-sm me-1"
+                                                           asp-controller="Client"
+                                                           asp-action="DownloadInvoice"
+                                                           asp-route-id="@o.OrderId">
                                                         <i class="bi bi-receipt-cutoff me-1"></i> Фактура
                                                     </a>
 
@@ -108,7 +118,9 @@
                                                     {
                                                         <span class="text-muted small">—</span>
                                                     }
+
                                                 </td>
+
                                             </tr>
                                         }
 

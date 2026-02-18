@@ -32,14 +32,19 @@ namespace Bevera.Controllers
             var pendingOrders = await _db.Orders.CountAsync(o => o.Status == OrderStates.Submitted);
             var deliveredOrders = await _db.Orders.CountAsync(o => o.Status == OrderStates.Delivered);
 
-            // 3) Revenue (само paid + delivered)
+            // 3) Revenue (общо приходи от всички НЕотказани поръчки)
+            // В симулацията имаме cash поръчки, които могат да са Unpaid докато не се получат/маркират.
+            // За "общо изкарано" е по-логично да сумираме всички поръчки без Cancelled.
             var revenue = await _db.Orders
-                .Where(o => o.PaymentStatus == PaymentStates.Paid && o.Status == OrderStates.Delivered)
+                .Where(o => o.Status != OrderStates.Cancelled)
                 .SumAsync(o => (decimal?)o.Total) ?? 0m;
 
             // 4) Stock indicators
+            // Използваме реалната наличност (Quantity ако го ползваш, иначе StockQty)
+            // и LowStockThreshold (по подразбиране 10 ако е 0).
             var lowStockProducts = await _db.Products
-                .CountAsync(p => p.Quantity < p.MinQuantity);
+                .CountAsync(p => ((p.Quantity > 0 ? p.Quantity : p.StockQty) > 0)
+                                 && ((p.Quantity > 0 ? p.Quantity : p.StockQty) <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10)));
 
             // 5) Users count (всички)
             var usersCount = await _db.Users.CountAsync();

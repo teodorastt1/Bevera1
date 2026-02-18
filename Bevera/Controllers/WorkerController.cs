@@ -32,7 +32,8 @@ namespace Bevera.Controllers
                 NewOrders = await _db.Orders.CountAsync(o => o.Status == OrderStates.Submitted),
                 PreparingOrders = await _db.Orders.CountAsync(o => o.Status == OrderStates.Preparing),
                 ShippedOrders = await _db.Orders.CountAsync(o => o.Status == OrderStates.ReadyForPickup),
-                LowStockProducts = await _db.Products.CountAsync(p => p.Quantity < p.MinQuantity),
+                LowStockProducts = await _db.Products.CountAsync(p => ((p.Quantity > 0 ? p.Quantity : p.StockQty) > 0)
+                                                                 && ((p.Quantity > 0 ? p.Quantity : p.StockQty) <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10))),
 
                 AwaitingPayment = await _db.Orders.CountAsync(o => o.PaymentStatus == PaymentStates.Unpaid),
                 Paid = await _db.Orders.CountAsync(o => o.PaymentStatus == PaymentStates.Paid)
@@ -48,14 +49,15 @@ namespace Bevera.Controllers
         {
             var items = await _db.Products
                 .AsNoTracking()
-                .Where(p => p.Quantity < p.MinQuantity)
+                .Where(p => ((p.Quantity > 0 ? p.Quantity : p.StockQty) > 0)
+                            && ((p.Quantity > 0 ? p.Quantity : p.StockQty) <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10)))
                 .OrderBy(p => p.Name)
                 .Select(p => new WorkerLowStockVm
                 {
                     ProductId = p.Id,
                     Name = p.Name,
-                    Quantity = p.Quantity,
-                    MinQuantity = p.MinQuantity
+                    Quantity = (p.Quantity > 0 ? p.Quantity : p.StockQty),
+                    MinQuantity = (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10)
                 })
                 .ToListAsync();
 

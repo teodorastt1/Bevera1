@@ -1,13 +1,28 @@
 ﻿@model Bevera.Models.ViewModels.EditUserRoleViewModel
 
 @{
+    Layout = "_AdminLayout";
     ViewData["Title"] = "Промяна на роля";
+    bool isSelf = ViewBag.IsSelf != null && (bool)ViewBag.IsSelf;
 }
 
-<h1 class="mb-3">@ViewData["Title"]</h1>
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="mb-1">@ViewData["Title"]</h1>
+        <div class="text-muted small">@Model.Email</div>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+</div>
 
 <div class="card p-4">
     <div class="mb-2"><b>User:</b> @Model.Email</div>
+
+    @if (isSelf)
+    {
+        <div class="alert alert-warning">
+            Като Admin не можеш да променяш собствената си роля.
+        </div>
+    }
 
     <form method="post">
         @Html.AntiForgeryToken()
@@ -16,9 +31,16 @@
 
         <div class="mb-3">
             <label class="form-label">Роля</label>
-            <select asp-for="RoleName" class="form-select" asp-items="Model.Roles">
+            <select asp-for="RoleName"
+                    class="form-select"
+                    asp-items="Model.Roles"
+                    disabled="@(isSelf ? "disabled" : null)">
                 <option value="">(без роля)</option>
             </select>
+            @if (isSelf)
+            {
+                <input type="hidden" asp-for="RoleName" value="Admin" />
+            }
         </div>
 
         <button type="submit" class="btn btn-success">Save</button>

@@ -20,36 +20,90 @@ namespace Bevera.Controllers
         }
 
         // GET: /AdminCategories
-        public async Task<IActionResult> Index(string? q, DateTime? from, DateTime? to, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string? q, DateTime? from, DateTime? to, int page = 1, int pageSize = 6)
         {
-            IQueryable<Category> query = _db.Categories.AsNoTracking();
+            if (page < 1) page = 1;
+            if (pageSize < 5) pageSize = 5;
+            if (pageSize > 50) pageSize = 50;
+
+            q = q?.Trim();
+
+            // 1) Paging върху MAIN категориите
+            IQueryable<Category> mainQuery = _db.Categories
+                .AsNoTracking()
+                .Where(c => c.ParentCategoryId == null);
 
             if (!string.IsNullOrWhiteSpace(q))
-            {
-                q = q.Trim();
-                query = query.Where(c => c.Name.Contains(q));
-            }
+                mainQuery = mainQuery.Where(c => c.Name.Contains(q));
 
             if (from.HasValue)
-                query = query.Where(c => c.CreatedAt >= from.Value.Date);
+                mainQuery = mainQuery.Where(c => c.CreatedAt >= from.Value.Date);
 
             if (to.HasValue)
             {
                 var end = to.Value.Date.AddDays(1);
-                query = query.Where(c => c.CreatedAt < end);
+                mainQuery = mainQuery.Where(c => c.CreatedAt < end);
             }
 
-            query = query.OrderByDescending(c => c.CreatedAt);
+            var totalItems = await mainQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (totalPages < 1) totalPages = 1;
+            if (page > totalPages) page = totalPages;
 
-            var paged = await query.ToPagedAsync(page, pageSize);
+            var mains = await mainQuery
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            ViewBag.Q = q;
+            var mainIds = mains.Select(m => m.Id).ToList();
+
+            // 2) Subcategories само за тези mains (в същата страница)
+            var subs = await _db.Categories
+                .AsNoTracking()
+                .Where(c => c.ParentCategoryId != null && mainIds.Contains(c.ParentCategoryId.Value))
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            // 3) Комбинираме (за View-то) -> mains първо, после subs
+            var items = new List<Category>();
+            items.AddRange(mains);
+            items.AddRange(subs);
+
+            // 4) PagedResult<Category> (вашият модел)
+            var model = new PagedResult<Category>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            // 5) Pager за partial-а
+            ViewBag.Pager = new PaginationViewModel
+            {
+                Page = page,
+                TotalPages = model.TotalPages,
+                Action = "Index",
+                Controller = "AdminCategories",
+                RouteValues = new Dictionary<string, string?>
+                {
+                    ["q"] = q,
+                    ["from"] = from?.ToString("yyyy-MM-dd"),
+                    ["to"] = to?.ToString("yyyy-MM-dd"),
+                    ["pageSize"] = pageSize.ToString()
+                }
+            };
+
+            ViewBag.Q = q ?? "";
             ViewBag.PageSize = pageSize;
             ViewBag.From = from?.ToString("yyyy-MM-dd");
             ViewBag.To = to?.ToString("yyyy-MM-dd");
 
-            return View(paged);
+            return View(model);
         }
+
+
 
         [HttpGet]
         public async Task<IActionResult> Create(int? parentId)

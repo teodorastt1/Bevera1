@@ -45,6 +45,11 @@ namespace Bevera.Data
             builder.Entity<OrderItem>().Property(oi => oi.UnitPrice).HasPrecision(18, 2);
             builder.Entity<OrderItem>().Property(oi => oi.LineTotal).HasPrecision(18, 2);
 
+
+            builder.Entity<Product>()
+      .Property(p => p.DiscountPercent)
+      .HasPrecision(5, 2);
+
             builder.Entity<Category>()
     .HasOne(c => c.ParentCategory)
     .WithMany(c => c.SubCategories)

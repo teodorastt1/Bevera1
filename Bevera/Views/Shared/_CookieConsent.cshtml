@@ -1,0 +1,31 @@
+@using Microsoft.AspNetCore.Http.Features
+
+@{
+    var consent = Context.Features.Get<ITrackingConsentFeature>();
+    // When CanTrack == false => we should ask for consent.
+    var needsConsent = consent != null && !consent.CanTrack;
+}
+
+@if (needsConsent)
+{
+    <div class="cookiebar" id="cookiebar">
+        <div class="cookiebar__inner">
+            <div class="cookiebar__text">
+                Използваме бисквитки за правилната работа на сайта (логин, количка) и по избор за базова статистика.
+                <a class="text-decoration-underline text-light" asp-controller="Home" asp-action="Cookies">Виж повече</a>.
+            </div>
+
+            <div class="cookiebar__actions">
+                <form asp-controller="Home" asp-action="RejectCookies" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-light">Отказ</button>
+                </form>
+
+                <form asp-controller="Home" asp-action="AcceptCookies" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-warning fw-bold">Приемам</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}

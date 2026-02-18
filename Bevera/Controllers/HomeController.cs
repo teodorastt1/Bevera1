@@ -3,6 +3,7 @@ using Bevera.Data;
 using Bevera.Helpers;
 using Bevera.Models;
 using Bevera.Models.ViewModels;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,6 +73,42 @@ namespace Bevera.Controllers
             };
 
             return View(vm);
+        }
+
+
+        // Cookie policy / consent
+        public IActionResult Cookies()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AcceptCookies()
+        {
+            var consent = HttpContext.Features.Get<ITrackingConsentFeature>();
+            consent?.GrantConsent();
+
+            TempData["FlashMessage"] = "Бисквитките са приети.";
+            TempData["FlashType"] = "success";
+
+            // go back where user was
+            var referer = Request.Headers.Referer.ToString();
+            return !string.IsNullOrWhiteSpace(referer) ? Redirect(referer) : RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RejectCookies()
+        {
+            var consent = HttpContext.Features.Get<ITrackingConsentFeature>();
+            consent?.WithdrawConsent();
+
+            TempData["FlashMessage"] = "Запазихме избора ти. Ще използваме само задължителните бисквитки.";
+            TempData["FlashType"] = "info";
+
+            var referer = Request.Headers.Referer.ToString();
+            return !string.IsNullOrWhiteSpace(referer) ? Redirect(referer) : RedirectToAction(nameof(Index));
         }
 
        

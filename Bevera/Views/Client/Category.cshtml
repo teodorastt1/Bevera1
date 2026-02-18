@@ -89,6 +89,8 @@
                                    ?? p.Images?.FirstOrDefault()?.ImagePath
                                    ?? "/images/image-1.jpg");
 
+                        var available = (p.Quantity > 0 ? p.Quantity : p.StockQty);
+
                         bool isFav = favIds.Contains(p.Id);
 
                         <div class="col-6 col-md-4 col-lg-3">
@@ -101,12 +103,27 @@
 
                                     <div class="product-img-wrap">
                                         <img src="@img" alt="@p.Name" class="product-img" />
+
+                                        @* Ниска наличност: само за Client и само ако наличността е под 10 *@
+                                        @if (User.IsInRole("Client") && available > 0 && available < 10)
+                                        {
+                                            <span class="low-stock-badge">Ниска наличност</span>
+                                        }
                                     </div>
 
                                     <div class="product-info">
                                         <div class="product-name">@p.Name</div>
                                         <div class="product-price">
-                                            @p.Price.ToString("C")
+                                            @if (p.DiscountPercent.HasValue && p.DiscountPercent.Value > 0 && (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= DateTime.UtcNow))
+                                            {
+                                                <span class="text-decoration-line-through text-muted me-2">@p.Price.ToString("0.00") €</span>
+                                                <span class="fw-bold">@p.EffectivePrice.ToString("0.00") €</span>
+                                            }
+                                            else
+                                            {
+                                                @p.Price.ToString("0.00")
+                                                <text> €</text>
+                                            }
                                         </div>
                                     </div>
                                 </a>
@@ -215,6 +232,20 @@
         align-items: center;
         justify-content: center;
         padding: 10px;
+        position: relative;
+    }
+
+    .low-stock-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #ffc107;
+        color: #000;
+        font-weight: 800;
+        font-size: .72rem;
+        padding: 6px 10px;
+        border-radius: 999px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.12);
     }
 
     .product-img {
@@ -239,5 +270,4 @@
         margin-top: 6px;
         font-weight: 800;
     }
-
 </style>

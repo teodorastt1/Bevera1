@@ -40,41 +40,6 @@
 })();
 
 // -----------------------------
-// Cookie consent banner (simple)
-// -----------------------------
-(function () {
-    const KEY = 'bevera_cookie_consent';
-    if (localStorage.getItem(KEY)) return;
-
-    const html = `
-    <div class="cookiebar" id="cookiebar">
-      <div class="cookiebar__inner">
-        <div class="cookiebar__text">
-          Използваме бисквитки, за да работи количката и за базова статистика. Няма реклами.
-        </div>
-        <div class="cookiebar__actions">
-          <button class="btn btn-sm btn-outline-light" id="cookieDecline">Отказ</button>
-          <button class="btn btn-sm btn-warning fw-bold" id="cookieAccept">Приемам</button>
-        </div>
-      </div>
-    </div>`;
-
-    document.body.insertAdjacentHTML('beforeend', html);
-
-    const bar = document.getElementById('cookiebar');
-    const accept = document.getElementById('cookieAccept');
-    const decline = document.getElementById('cookieDecline');
-
-    function close(val) {
-        localStorage.setItem(KEY, val);
-        bar?.remove();
-    }
-
-    accept?.addEventListener('click', () => close('accepted'));
-    decline?.addEventListener('click', () => close('declined'));
-})();
-
-// -----------------------------
 // Lightweight JS messages
 // Use: <div class="js-flash" data-message="..." data-type="success"></div>
 // -----------------------------

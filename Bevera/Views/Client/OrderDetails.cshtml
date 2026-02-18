@@ -1,0 +1,62 @@
+﻿@model Bevera.Models.ViewModels.OrderDetailsViewModel
+@{
+    ViewData["Title"] = "Детайли на поръчка";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1" style="font-family:'Playfair Display',serif;">
+                Поръчка @Model.OrderNumber
+            </h2>
+            <div class="text-muted">
+                Дата: @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                • Статус: <span class="badge rounded-pill bg-success">@Model.Status</span>
+            </div>
+        </div>
+
+        <a class="btn btn-outline-secondary" asp-action="Profile" asp-controller="Client">
+            ← Назад
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:90px;">Снимка</th>
+                        <th>Продукт</th>
+                        <th class="text-end" style="width:140px;">Ед. цена</th>
+                        <th class="text-center" style="width:110px;">Кол.</th>
+                        <th class="text-end" style="width:160px;">Общо</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var it in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <img src="@(string.IsNullOrWhiteSpace(it.ImageUrl) ? "/img/no-image.png" : it.ImageUrl)"
+                                     alt="@it.Name"
+                                     style="width:70px;height:70px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid #eee;" />
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@it.Name</div>
+                            </td>
+                            <td class="text-end">@it.UnitPrice.ToString("0.00") €</td>
+                            <td class="text-center">@it.Quantity</td>
+                            <td class="text-end fw-bold">@it.LineTotal.ToString("0.00") €</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end fw-semibold">Крайна сума:</td>
+                        <td class="text-end fw-bold fs-5">@Model.Total.ToString("0.00") €</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

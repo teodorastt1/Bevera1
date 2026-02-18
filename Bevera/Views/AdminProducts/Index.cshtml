@@ -42,6 +42,26 @@
             </select>
         </div>
 
+        <div class="col-md-3">
+            <label class="form-label mb-1">Sort</label>
+            <select class="form-select" name="sort">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.Sort))">(Default)</option>
+                <option value="name_asc" selected="@(ViewBag.Sort == "name_asc")">Name A → Z</option>
+                <option value="name_desc" selected="@(ViewBag.Sort == "name_desc")">Name Z → A</option>
+                <option value="stock_asc" selected="@(ViewBag.Sort == "stock_asc")">Stock low → high</option>
+                <option value="stock_desc" selected="@(ViewBag.Sort == "stock_desc")">Stock high → low</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label mb-1">Qty range</label>
+            <div class="d-flex gap-2">
+                <input type="number" min="0" name="minQty" value="@ViewBag.MinQty" class="form-control" placeholder="Min" />
+                <input type="number" min="0" name="maxQty" value="@ViewBag.MaxQty" class="form-control" placeholder="Max" />
+            </div>
+        </div>
+
+
         <div class="col-md-2 d-flex gap-2">
             <button class="btn btn-primary w-100" type="submit">Filter</button>
             <a class="btn btn-outline-secondary w-100" asp-action="Index">Clear</a>
@@ -81,7 +101,7 @@
                         </td>
                         <td class="fw-semibold">@p.Name</td>
                         <td>@p.CategoryName</td>
-                        <td>@p.Price.ToString("0.00") лв.</td>
+                        <td>@p.Price.ToString("0.00") €</td>
                         <td>
                             <span class="fw-semibold">@p.StockQty</span>
                             <span class="text-muted"> / low ≤ @p.LowStockThreshold</span>
