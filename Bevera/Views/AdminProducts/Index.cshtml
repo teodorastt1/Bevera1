@@ -146,8 +146,12 @@
             ["q"] = ViewBag.Q as string,
             ["categoryId"] = ViewBag.CategoryId?.ToString(),
             ["stock"] = ViewBag.Stock as string,
+            ["sort"] = ViewBag.Sort as string,
+            ["minQty"] = ViewBag.MinQty?.ToString(),
+            ["maxQty"] = ViewBag.MaxQty?.ToString(),
             ["pageSize"] = (ViewBag.PageSize ?? Model.PageSize).ToString()
         }
+
     };
 }
 <partial name="_Pagination" model="pager" />

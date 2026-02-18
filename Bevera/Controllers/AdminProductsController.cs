@@ -21,7 +21,7 @@ namespace Bevera.Controllers
         }
 
         // GET: /AdminProducts
-        public async Task<IActionResult> Index(string? q, int? categoryId, string? stock, int page = 1, int pageSize = 6)
+        public async Task<IActionResult> Index(string? q, int? categoryId, string? stock, string? sort, int? minQty, int? maxQty, int page = 1, int pageSize = 10)
         {
             ViewBag.Q = q;
             ViewBag.CategoryId = categoryId;
@@ -51,18 +51,39 @@ namespace Bevera.Controllers
             if (categoryId.HasValue && categoryId.Value > 0)
                 query = query.Where(p => p.CategoryId == categoryId.Value);
 
-            // ✅ low stock = има наличност, но е ниска
             if (!string.IsNullOrWhiteSpace(stock) && stock == "low")
-                query = query.Where(p => p.StockQty > 0 && p.StockQty <= p.LowStockThreshold);
+                query = query.Where(p => p.StockQty > 0 &&
+                                         p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10));
 
             // ✅ out of stock ако решиш да го ползваш
             if (!string.IsNullOrWhiteSpace(stock) && stock == "out")
                 query = query.Where(p => p.StockQty <= 0);
 
+            if (minQty.HasValue)
+                query = query.Where(p => p.StockQty >= minQty.Value);
+
+            if (maxQty.HasValue)
+                query = query.Where(p => p.StockQty <= maxQty.Value);
+
+
+
+            // sort
+            query = sort switch
+            {
+                "name_asc" => query.OrderBy(p => p.Name),
+                "name_desc" => query.OrderByDescending(p => p.Name),
+
+                "stock_asc" => query.OrderBy(p => p.StockQty).ThenBy(p => p.Name),
+                "stock_desc" => query.OrderByDescending(p => p.StockQty).ThenBy(p => p.Name),
+
+                _ => query.OrderByDescending(p => p.Id)
+            };
+
+
+
             var total = await query.CountAsync();
 
             var items = await query
-                .OrderByDescending(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new AdminProductRowViewModel
@@ -85,6 +106,11 @@ namespace Bevera.Controllers
                 PageSize = pageSize,
                 TotalItems = total
             };
+
+            ViewBag.Sort = sort ?? "";
+            ViewBag.MinQty = minQty?.ToString() ?? "";
+            ViewBag.MaxQty = maxQty?.ToString() ?? "";
+
 
             return View(model);
         }
