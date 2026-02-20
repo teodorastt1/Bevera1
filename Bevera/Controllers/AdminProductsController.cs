@@ -52,8 +52,8 @@ namespace Bevera.Controllers
                 query = query.Where(p => p.CategoryId == categoryId.Value);
 
             if (!string.IsNullOrWhiteSpace(stock) && stock == "low")
-                query = query.Where(p => p.StockQty > 0 &&
-                                         p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10));
+                query = query.Where(p =>
+                    p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10));
 
             // ✅ out of stock ако решиш да го ползваш
             if (!string.IsNullOrWhiteSpace(stock) && stock == "out")

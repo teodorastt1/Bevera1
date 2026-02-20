@@ -8,8 +8,6 @@
 
     var pager = ViewBag.Pager as Bevera.Models.ViewModels.PaginationViewModel;
 
-    // Очакване: Model.Items съдържа mains + subs за текущата страница.
-    // Ако Model.Items идва само като "всички категории" paged, пак ще работи, но може да липсват subs.
     var mains = Model.Items.Where(c => c.ParentCategoryId == null).ToList();
     var subs = Model.Items.Where(c => c.ParentCategoryId != null).ToList();
 }
@@ -20,8 +18,17 @@
     <a class="btn btn-success" asp-action="Create">+ Add Main Category</a>
 </div>
 
-<table class="table table-bordered align-middle">
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mb-3">@TempData["Error"]</div>
+}
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mb-3">@TempData["Success"]</div>
+}
+
+<table class="table table-bordered align-middle">
     <thead class="table-light">
         <tr>
             <th style="width:80px;">Image</th>
@@ -31,8 +38,8 @@
             <th style="width:260px;">Action</th>
         </tr>
     </thead>
-    <tbody>
 
+    <tbody>
         @if (mains.Count == 0)
         {
             <tr>
@@ -47,7 +54,8 @@
                     <td>
                         @if (!string.IsNullOrEmpty(main.ImagePath))
                         {
-                            <img src="@main.ImagePath" style="width:60px;height:60px;object-fit:cover;border-radius:8px;" />
+                            <img src="@main.ImagePath"
+                                 style="width:60px;height:60px;object-fit:cover;border-radius:8px;" />
                         }
                         else
                         {
@@ -78,6 +86,18 @@
                                 Edit
                             </a>
 
+                            <form asp-controller="AdminCategories"
+                                  asp-action="Delete"
+                                  asp-route-id="@main.Id"
+                                  method="post"
+                                  style="display:inline;"
+                                  onsubmit="return confirm('Сигурна ли си, че искаш ДА ИЗТРИЕШ категорията? Това е необратимо.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    Delete
+                                </button>
+                            </form>
+
                             <a class="btn btn-sm btn-success"
                                    asp-action="Create"
                                    asp-route-parentId="@main.Id">
@@ -95,7 +115,8 @@
                         <td>
                             @if (!string.IsNullOrEmpty(child.ImagePath))
                             {
-                                <img src="@child.ImagePath" style="width:50px;height:50px;object-fit:cover;border-radius:8px;" />
+                                <img src="@child.ImagePath"
+                                     style="width:50px;height:50px;object-fit:cover;border-radius:8px;" />
                             }
                             else
                             {
@@ -121,24 +142,34 @@
                         <td>@child.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
 
                         <td>
-                            <a class="btn btn-sm btn-outline-primary"
-                                   asp-action="Edit"
-                                   asp-route-id="@child.Id">
-                                Edit
-                            </a>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Edit"
+                                       asp-route-id="@child.Id">
+                                    Edit
+                                </a>
+
+                                <form asp-controller="AdminCategories"
+                                      asp-action="Delete"
+                                      asp-route-id="@child.Id"
+                                      method="post"
+                                      style="display:inline;"
+                                      onsubmit="return confirm('Сигурна ли си, че искаш ДА ИЗТРИЕШ подкатегорията? Това е необратимо.');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 }
             }
         }
-
     </tbody>
 </table>
-
-
 
 @if (pager != null)
 {
     <partial name="_Pagination" model="pager" />
 }
-

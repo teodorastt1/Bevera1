@@ -308,5 +308,50 @@ namespace Bevera.Controllers
             if (System.IO.File.Exists(fullPath))
                 System.IO.File.Delete(fullPath);
         }
+
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var category = await _db.Categories
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (category == null)
+            return NotFound();
+
+        // 1) ако има подкатегории -> НЕ трий
+        var hasSubCategories = await _db.Categories.AnyAsync(c => c.ParentCategoryId == id);
+        if (hasSubCategories)
+        {
+            TempData["Error"] = "Не може да се изтрие категория, която има подкатегории. Изтрий първо подкатегориите.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // 2) ако има продукти -> НЕ трий
+        var hasProducts = await _db.Products.AnyAsync(p => p.CategoryId == id);
+        if (hasProducts)
+        {
+            TempData["Error"] = "Не може да се изтрие подкатегория, която има продукти. Премести/изтрий продуктите първо.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // 3) Реално изтриване
+        _db.Categories.Remove(category);
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Категорията е изтрита.";
+        }
+        catch (DbUpdateException)
+        {
+            // ако има FK зависимост, която сме изпуснали
+            TempData["Error"] = "Категорията не може да се изтрие (има свързани данни).";
+        }
+
+        return RedirectToAction(nameof(Index));
     }
+}
 }

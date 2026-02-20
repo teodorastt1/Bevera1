@@ -43,9 +43,7 @@ namespace Bevera.Controllers
             // Използваме реалната наличност (Quantity ако го ползваш, иначе StockQty)
             // и LowStockThreshold (по подразбиране 10 ако е 0).
             var lowStockProducts = await _db.Products
-                .CountAsync(p => ((p.Quantity > 0 ? p.Quantity : p.StockQty) > 0)
-                                 && ((p.Quantity > 0 ? p.Quantity : p.StockQty) <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10)));
-
+            .CountAsync(p => p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10));
             // 5) Users count (всички)
             var usersCount = await _db.Users.CountAsync();
 

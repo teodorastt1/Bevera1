@@ -46,6 +46,20 @@ namespace Bevera.Data
             builder.Entity<OrderItem>().Property(oi => oi.LineTotal).HasPrecision(18, 2);
 
 
+            // Category (Parent) -> Subcategories (self reference)
+            builder.Entity<Category>()
+                .HasOne(c => c.ParentCategory)
+                .WithMany(c => c.SubCategories)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Category -> Products
+            builder.Entity<Product>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.Entity<Product>()
       .Property(p => p.DiscountPercent)
       .HasPrecision(5, 2);
