@@ -1,5 +1,4 @@
 ﻿using Bevera.Data;
-using Bevera.Extensions;
 using Bevera.Models.Catalog;
 using Bevera.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -19,16 +18,17 @@ namespace Bevera.Controllers
             _db = db;
         }
 
-        // GET: /AdminCategories
+        // =========================
+        // INDEX
+        // =========================
+        [HttpGet]
         public async Task<IActionResult> Index(string? q, DateTime? from, DateTime? to, int page = 1, int pageSize = 6)
         {
-            if (page < 1) page = 1;
-            if (pageSize < 5) pageSize = 5;
-            if (pageSize > 50) pageSize = 50;
-
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 5, 50);
             q = q?.Trim();
 
-            // 1) Paging върху MAIN категориите
+            // Paging само върху MAIN категории
             IQueryable<Category> mainQuery = _db.Categories
                 .AsNoTracking()
                 .Where(c => c.ParentCategoryId == null);
@@ -47,7 +47,7 @@ namespace Bevera.Controllers
 
             var totalItems = await mainQuery.CountAsync();
             var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
-            if (totalPages < 1) totalPages = 1;
+            totalPages = Math.Max(1, totalPages);
             if (page > totalPages) page = totalPages;
 
             var mains = await mainQuery
@@ -58,19 +58,17 @@ namespace Bevera.Controllers
 
             var mainIds = mains.Select(m => m.Id).ToList();
 
-            // 2) Subcategories само за тези mains (в същата страница)
+            // Subcategories само за текущите mains на страницата
             var subs = await _db.Categories
                 .AsNoTracking()
                 .Where(c => c.ParentCategoryId != null && mainIds.Contains(c.ParentCategoryId.Value))
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            // 3) Комбинираме (за View-то) -> mains първо, после subs
             var items = new List<Category>();
             items.AddRange(mains);
             items.AddRange(subs);
 
-            // 4) PagedResult<Category> (вашият модел)
             var model = new PagedResult<Category>
             {
                 Items = items,
@@ -79,7 +77,6 @@ namespace Bevera.Controllers
                 TotalItems = totalItems
             };
 
-            // 5) Pager за partial-а
             ViewBag.Pager = new PaginationViewModel
             {
                 Page = page,
@@ -103,61 +100,37 @@ namespace Bevera.Controllers
             return View(model);
         }
 
-
-
+        // =========================
+        // CREATE
+        // =========================
         [HttpGet]
         public async Task<IActionResult> Create(int? parentId)
         {
-            var parents = await _db.Categories
-                .Where(c => c.ParentCategoryId == null)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-
             var vm = new AdminCategoryFormViewModel
             {
-                ParentOptions = parents.Select(p => new SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = p.Name
-                }).ToList()
+                ParentOptions = await GetParentOptionsAsync()
             };
 
-            vm.ParentOptions.Insert(0, new SelectListItem { Value = "", Text = "— Основна категория —" });
-
-            // ✅ ако идваш от бутона "+ Subcategory"
+            // ако идваш от "+ Subcategory"
             if (parentId.HasValue)
                 vm.ParentCategoryId = parentId.Value;
 
             return View(vm);
         }
 
-
-        // POST: /AdminCategories/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AdminCategoryFormViewModel vm)
         {
-            // винаги презареждай dropdown-а
             vm.ParentOptions = await GetParentOptionsAsync();
 
             if (!ModelState.IsValid)
                 return View(vm);
 
-            // ако е избран parent -> трябва да е root категория (ParentCategoryId == null)
-            if (vm.ParentCategoryId.HasValue)
+            if (!await IsValidRootParentAsync(vm.ParentCategoryId, excludeId: null))
             {
-                var parent = await _db.Categories.FirstOrDefaultAsync(c => c.Id == vm.ParentCategoryId.Value);
-                if (parent == null)
-                {
-                    ModelState.AddModelError(nameof(vm.ParentCategoryId), "Невалидна основна категория.");
-                    return View(vm);
-                }
-
-                if (parent.ParentCategoryId != null)
-                {
-                    ModelState.AddModelError(nameof(vm.ParentCategoryId), "Може да избираш само основна категория за Parent.");
-                    return View(vm);
-                }
+                ModelState.AddModelError(nameof(vm.ParentCategoryId), "Невалидна основна категория.");
+                return View(vm);
             }
 
             var category = new Category
@@ -168,11 +141,8 @@ namespace Bevera.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            // ✅ реално качване на снимка
             if (vm.ImageFile != null && vm.ImageFile.Length > 0)
-            {
                 category.ImagePath = await SaveCategoryImageAsync(vm.ImageFile);
-            }
 
             _db.Categories.Add(category);
             await _db.SaveChangesAsync();
@@ -180,7 +150,9 @@ namespace Bevera.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /AdminCategories/Edit/5
+        // =========================
+        // EDIT
+        // =========================
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -200,7 +172,6 @@ namespace Bevera.Controllers
             return View(vm);
         }
 
-        // POST: /AdminCategories/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(AdminCategoryFormViewModel vm)
@@ -213,30 +184,35 @@ namespace Bevera.Controllers
             var c = await _db.Categories.FirstOrDefaultAsync(x => x.Id == vm.Id);
             if (c == null) return NotFound();
 
-            // validate parent rule
-            if (vm.ParentCategoryId.HasValue)
+            // ✅ FIX за проблема ти:
+            // Ако категорията е БИЛА подкатегория (има ParentCategoryId),
+            // НЕ позволяваме да стане main само защото vm.ParentCategoryId е null.
+            // (Това е точно бъгът при "Inactive" -> Save.)
+            var originalParentId = c.ParentCategoryId;
+            var wasSubcategory = originalParentId.HasValue;
+
+            // Валидираме parent само ако е подаден (не-null)
+            // И ако е null, но е била подкатегория -> пазим стария parent.
+            int? newParentId = vm.ParentCategoryId;
+
+            if (wasSubcategory && newParentId == null)
             {
-                var parent = await _db.Categories.FirstOrDefaultAsync(x => x.Id == vm.ParentCategoryId.Value);
-                if (parent == null)
+                // Пази йерархията. Подкатегория си остава подкатегория.
+                newParentId = originalParentId;
+            }
+            else
+            {
+                // Ако иска да зададе parent -> трябва да е root и да не е самата категория
+                if (!await IsValidRootParentAsync(newParentId, excludeId: vm.Id))
                 {
                     ModelState.AddModelError(nameof(vm.ParentCategoryId), "Невалидна основна категория.");
-                    return View(vm);
-                }
-                if (parent.ParentCategoryId != null)
-                {
-                    ModelState.AddModelError(nameof(vm.ParentCategoryId), "Може да избираш само основна категория за Parent.");
-                    return View(vm);
-                }
-                if (parent.Id == vm.Id)
-                {
-                    ModelState.AddModelError(nameof(vm.ParentCategoryId), "Категорията не може да е parent на самата себе си.");
                     return View(vm);
                 }
             }
 
             c.Name = vm.Name.Trim();
             c.IsActive = vm.IsActive;
-            c.ParentCategoryId = vm.ParentCategoryId;
+            c.ParentCategoryId = newParentId;
 
             if (vm.ImageFile != null && vm.ImageFile.Length > 0)
             {
@@ -249,7 +225,49 @@ namespace Bevera.Controllers
         }
 
         // =========================
-        // Helpers
+        // DELETE (REAL DELETE)
+        // =========================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            if (category == null) return NotFound();
+
+            // ако има подкатегории -> не трий
+            var hasSubCategories = await _db.Categories.AnyAsync(c => c.ParentCategoryId == id);
+            if (hasSubCategories)
+            {
+                TempData["Error"] = "Не може да се изтрие категория, която има подкатегории. Изтрий първо подкатегориите.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // ако има продукти -> не трий
+            var hasProducts = await _db.Products.AnyAsync(p => p.CategoryId == id);
+            if (hasProducts)
+            {
+                TempData["Error"] = "Не може да се изтрие подкатегория, която има продукти. Премести/изтрий продуктите първо.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _db.Categories.Remove(category);
+
+            try
+            {
+                await _db.SaveChangesAsync();
+                // ако не искаш съобщения - махни този ред:
+                TempData["Success"] = "Категорията е изтрита.";
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "Категорията не може да се изтрие (има свързани данни).";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =========================
+        // HELPERS
         // =========================
         private async Task<List<SelectListItem>> GetParentOptionsAsync(int? excludeId = null)
         {
@@ -270,10 +288,22 @@ namespace Bevera.Controllers
                 Text = p.Name
             }).ToList();
 
-            // ✅ само един placeholder
             list.Insert(0, new SelectListItem { Value = "", Text = "— Основна категория —" });
-
             return list;
+        }
+
+        // ParentCategoryId може да е null (значи main category)
+        private async Task<bool> IsValidRootParentAsync(int? parentCategoryId, int? excludeId)
+        {
+            if (!parentCategoryId.HasValue) return true; // main category е ок
+
+            // не може да е самата категория
+            if (excludeId.HasValue && parentCategoryId.Value == excludeId.Value)
+                return false;
+
+            // parent трябва да е ROOT (ParentCategoryId == null)
+            return await _db.Categories.AsNoTracking()
+                .AnyAsync(c => c.Id == parentCategoryId.Value && c.ParentCategoryId == null);
         }
 
         private async Task<string> SaveCategoryImageAsync(IFormFile file)
@@ -308,50 +338,5 @@ namespace Bevera.Controllers
             if (System.IO.File.Exists(fullPath))
                 System.IO.File.Delete(fullPath);
         }
-
-
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var category = await _db.Categories
-            .FirstOrDefaultAsync(c => c.Id == id);
-
-        if (category == null)
-            return NotFound();
-
-        // 1) ако има подкатегории -> НЕ трий
-        var hasSubCategories = await _db.Categories.AnyAsync(c => c.ParentCategoryId == id);
-        if (hasSubCategories)
-        {
-            TempData["Error"] = "Не може да се изтрие категория, която има подкатегории. Изтрий първо подкатегориите.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        // 2) ако има продукти -> НЕ трий
-        var hasProducts = await _db.Products.AnyAsync(p => p.CategoryId == id);
-        if (hasProducts)
-        {
-            TempData["Error"] = "Не може да се изтрие подкатегория, която има продукти. Премести/изтрий продуктите първо.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        // 3) Реално изтриване
-        _db.Categories.Remove(category);
-
-        try
-        {
-            await _db.SaveChangesAsync();
-            TempData["Success"] = "Категорията е изтрита.";
-        }
-        catch (DbUpdateException)
-        {
-            // ако има FK зависимост, която сме изпуснали
-            TempData["Error"] = "Категорията не може да се изтрие (има свързани данни).";
-        }
-
-        return RedirectToAction(nameof(Index));
     }
-}
 }

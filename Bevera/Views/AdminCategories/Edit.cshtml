@@ -16,6 +16,9 @@
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="ExistingImagePath" />
 
+    <!-- ✅ ВАЖНО: пази parent-а, за да не се превръща subcategory в main -->
+    <input type="hidden" asp-for="ParentCategoryId" />
+
     <div class="mb-3">
         <label class="form-label">Name</label>
         <input class="form-control" asp-for="Name" />
