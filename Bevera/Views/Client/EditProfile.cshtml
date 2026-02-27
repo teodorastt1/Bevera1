@@ -1,6 +1,6 @@
 ﻿@model Bevera.Models.ViewModels.EditProfileVm
 @{
-    ViewData["Title"] = "Edit Profile";
+    ViewData["Title"] = "Редакция на профила";
     ViewData["BodyClass"] = "bg-editprofile";
 }
 
@@ -8,12 +8,13 @@
     <div class="container py-5" style="max-width: 720px;">
 
         <h2 class="mb-4 text-center fw-bold" style="font-family:'Playfair Display',serif;">
-            Edit Details
+            Редакция на данни
         </h2>
 
+        @* ✅ Ако искаш toast вместо alert, по-долу ще ти кажа как *@
         @if (TempData["Msg"] != null)
         {
-            <div class="alert alert-success text-center shadow-sm">
+            <div class="alert alert-success text-center shadow-sm rounded-4">
                 @TempData["Msg"]
             </div>
         }
@@ -23,52 +24,48 @@
             <form asp-action="EditProfile" method="post" novalidate>
                 @Html.AntiForgeryToken()
 
-                <div asp-validation-summary="ModelOnly"
-                     class="text-danger small mb-3">
-                </div>
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
                 <div class="row g-4">
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">First Name</label>
+                        <label class="form-label fw-semibold">Име</label>
                         <input asp-for="FirstName"
                                class="form-control form-control-lg"
                                autocomplete="given-name"
                                maxlength="50" />
-                        <span asp-validation-for="FirstName"
-                              class="text-danger small"></span>
+                        <span asp-validation-for="FirstName" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Last Name</label>
+                        <label class="form-label fw-semibold">Фамилия</label>
                         <input asp-for="LastName"
                                class="form-control form-control-lg"
                                autocomplete="family-name"
                                maxlength="50" />
-                        <span asp-validation-for="LastName"
-                              class="text-danger small"></span>
+                        <span asp-validation-for="LastName" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Phone</label>
+                        <label class="form-label fw-semibold">Телефон</label>
                         <input asp-for="PhoneNumber"
                                class="form-control form-control-lg"
                                autocomplete="tel"
                                pattern="^0[0-9]{9}$"
                                maxlength="10"
                                placeholder="0888123456" />
-                        <span asp-validation-for="PhoneNumber"
-                              class="text-danger small"></span>
+                        <div class="form-text">Формат: 0XXXXXXXXX (10 цифри)</div>
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Address</label>
+                        <label class="form-label fw-semibold">Адрес</label>
                         <input asp-for="Address"
                                class="form-control form-control-lg"
                                autocomplete="street-address"
-                               maxlength="120" />
-                        <span asp-validation-for="Address"
-                              class="text-danger small"></span>
+                               maxlength="120"
+                               placeholder="ул. ..., №..., вход..., ап..." />
+                        <span asp-validation-for="Address" class="text-danger small"></span>
                     </div>
 
                 </div>
@@ -79,12 +76,12 @@
                             class="btn btn-warning rounded-pill fw-semibold px-4 shadow-sm"
                             id="saveBtn">
                         <i class="bi bi-check2-circle me-1"></i>
-                        Save Changes
+                        Запази
                     </button>
 
                     <a asp-action="Profile"
                            class="btn btn-outline-dark rounded-pill px-4">
-                        Cancel
+                        Отказ
                     </a>
 
                 </div>
@@ -99,17 +96,19 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        // Loading ефект
-        document.querySelector("form").addEventListener("submit", function () {
+        // Loading ефект при submit
+        document.querySelector("form")?.addEventListener("submit", function () {
             const btn = document.getElementById("saveBtn");
-            btn.innerHTML = "Saving...";
+            if (!btn) return;
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Запазване...';
             btn.disabled = true;
         });
 
         // Trim на всички input-и
         document.querySelectorAll("input").forEach(i => {
             i.addEventListener("blur", function () {
-                this.value = this.value.trim();
+                this.value = (this.value || "").trim();
             });
         });
     </script>

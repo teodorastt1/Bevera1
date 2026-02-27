@@ -620,6 +620,36 @@ body {
     animation: subtlePulse 4s infinite ease-in-out;
 }
 
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+    .btn-icon i {
+        font-size: 1.05rem;
+        line-height: 1;
+    }
+/* Fix icon buttons in tables */
+.table .btn.btn-sm.btn-icon {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+}
+
+    .table .btn.btn-sm.btn-icon i {
+        font-size: 1.1rem !important;
+        line-height: 1 !important;
+    }
+
 
 
 

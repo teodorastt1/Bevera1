@@ -11,6 +11,6 @@
         public bool IsActive { get; set; }
         public string? ImagePath { get; set; }
 
-        public bool IsLowStock => StockQty <= LowStockThreshold;
+        public bool IsLowStock => StockQty <= (LowStockThreshold > 0 ? LowStockThreshold : 10);
     }
 }

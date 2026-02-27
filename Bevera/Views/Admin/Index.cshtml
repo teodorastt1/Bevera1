@@ -1,7 +1,7 @@
 ﻿@model Bevera.Models.ViewModel.AdminDashboardViewModel
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Табло";
 }
 
 <div class="kpi-grid">
@@ -9,16 +9,16 @@
     <div class="kpi-card kpi--blue">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Categories</div>
+                <div class="kpi-label">Категории</div>
                 <div class="kpi-value">@Model.CategoriesCount</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/category.png" alt="Categories" />
+                <img src="~/images/icons/category.png" alt="Категории" />
             </div>
         </div>
         <div class="kpi-footer">
             <a class="kpi-link" asp-controller="AdminCategories" asp-action="Index">
-                <span class="eye">👁️</span> View details
+                <span class="eye">👁️</span> Преглед
             </a>
         </div>
     </div>
@@ -26,16 +26,16 @@
     <div class="kpi-card kpi--rose">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Products</div>
+                <div class="kpi-label">Продукти</div>
                 <div class="kpi-value">@Model.ProductsCount</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/products.png" alt="Products" />
+                <img src="~/images/icons/products.png" alt="Продукти" />
             </div>
         </div>
         <div class="kpi-footer">
             <a class="kpi-link" asp-controller="AdminProducts" asp-action="Index">
-                <span class="eye">👁️</span> View details
+                <span class="eye">👁️</span> Преглед
             </a>
         </div>
     </div>
@@ -43,16 +43,16 @@
     <div class="kpi-card kpi--dark">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Total Orders</div>
+                <div class="kpi-label">Общо поръчки</div>
                 <div class="kpi-value">@Model.OrdersCount</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/orders.png" alt="Orders" />
+                <img src="~/images/icons/orders.png" alt="Поръчки" />
             </div>
         </div>
         <div class="kpi-footer">
             <a class="kpi-link" asp-controller="Orders" asp-action="Index">
-                <span class="eye">👁️</span> View details
+                <span class="eye">👁️</span> Преглед
             </a>
         </div>
     </div>
@@ -60,30 +60,29 @@
     <div class="kpi-card kpi--red">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Revenue</div>
+                <div class="kpi-label">Приходи</div>
                 <div class="kpi-value">@Model.Revenue.ToString("0.00") €</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/revenue.jpg" alt="Revenue" />
+                <img src="~/images/icons/revenue.jpg" alt="Приходи" />
             </div>
         </div>
-        <div class="kpi-footer">
-        </div>
+        <div class="kpi-footer"></div>
     </div>
 
     <div class="kpi-card kpi--rose">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Pending</div>
+                <div class="kpi-label">Чакащи</div>
                 <div class="kpi-value">@Model.PendingOrders</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/pending.png" alt="Pending" />
+                <img src="~/images/icons/pending.png" alt="Чакащи" />
             </div>
         </div>
         <div class="kpi-footer">
             <a class="kpi-link" asp-controller="Orders" asp-action="Index" asp-route-status="Submitted">
-                <span class="eye">👁️</span> View details
+                <span class="eye">👁️</span> Преглед
             </a>
         </div>
     </div>
@@ -91,16 +90,16 @@
     <div class="kpi-card kpi--blue">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Delivered</div>
+                <div class="kpi-label">Доставени</div>
                 <div class="kpi-value">@Model.DeliveredOrders</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/delivered.png" alt="Delivered" />
+                <img src="~/images/icons/delivered.png" alt="Доставени" />
             </div>
         </div>
         <div class="kpi-footer">
             <a class="kpi-link" asp-controller="Orders" asp-action="Index" asp-route-status="Delivered">
-                <span class="eye">👁️</span> View details
+                <span class="eye">👁️</span> Преглед
             </a>
         </div>
     </div>
@@ -108,16 +107,16 @@
     <div class="kpi-card kpi--red">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Low stock</div>
+                <div class="kpi-label">Ниска наличност</div>
                 <div class="kpi-value">@Model.LowStockProducts</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/lowstock.jpg" alt="Low stock" />
+                <img src="~/images/icons/lowstock.jpg" alt="Ниска наличност" />
             </div>
         </div>
         <div class="kpi-footer">
             <a class="kpi-link" asp-controller="AdminProducts" asp-action="Index" asp-route-stock="low">
-                <span class="eye">👁️</span> View details
+                <span class="eye">👁️</span> Преглед
             </a>
         </div>
     </div>
@@ -125,16 +124,16 @@
     <div class="kpi-card kpi--dark">
         <div class="kpi-head">
             <div>
-                <div class="kpi-label">Users</div>
+                <div class="kpi-label">Потребители</div>
                 <div class="kpi-value">@Model.UsersCount</div>
             </div>
             <div class="kpi-icon">
-                <img src="~/images/icons/user.jpg" alt="Users" />
+                <img src="~/images/icons/user.jpg" alt="Потребители" />
             </div>
         </div>
         <div class="kpi-footer">
             <a class="kpi-link" asp-controller="AdminRoles" asp-action="Index">
-                <span class="eye">👁️</span> View details
+                <span class="eye">👁️</span> Преглед
             </a>
         </div>
     </div>

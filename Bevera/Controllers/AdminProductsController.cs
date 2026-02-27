@@ -21,7 +21,7 @@ namespace Bevera.Controllers
         }
 
         // GET: /AdminProducts
-        public async Task<IActionResult> Index(string? q, int? categoryId, string? stock, string? sort, int? minQty, int? maxQty, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string? q, int? categoryId, string? stock, string? sort, int? minQty, int? maxQty, int page = 1, int pageSize = 5)
         {
             ViewBag.Q = q;
             ViewBag.CategoryId = categoryId;

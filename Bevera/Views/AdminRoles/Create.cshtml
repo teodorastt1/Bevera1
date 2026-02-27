@@ -10,7 +10,7 @@
         <h1 class="mb-1">@ViewData["Title"]</h1>
         <div class="text-muted small">Създава нов потребител и избира роля.</div>
     </div>
-    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Назад</a>
 </div>
 
 <div class="card shadow-sm border-0 rounded-4">
@@ -22,7 +22,7 @@
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Email</label>
+                    <label class="form-label">Имейл</label>
                     <input asp-for="Email" class="form-control" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
@@ -63,8 +63,8 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-success">Create</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success">Създай</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
             </div>
         </form>
     </div>

@@ -1,9 +1,23 @@
-﻿@model Bevera.Models.ViewModels.PagedResult<Bevera.Models.ViewModels.AdminProductRowViewModel>
+﻿@using Bevera.Models.ViewModels
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model PagedResult<AdminProductRowViewModel>
 
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Products";
-    var categories = ViewBag.Categories as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+
+    var categories = ViewBag.Categories as List<SelectListItem> ?? new();
+
+    string q = ViewBag.Q as string ?? "";
+    string stock = ViewBag.Stock as string ?? "";
+    string sort = ViewBag.Sort as string ?? "";
+
+    string categoryIdStr = ViewBag.CategoryId?.ToString() ?? "";
+
+    string minQty = ViewBag.MinQty as string ?? "";
+    string maxQty = ViewBag.MaxQty as string ?? "";
+
+    string pageSize = (ViewBag.PageSize ?? Model.PageSize).ToString();
 }
 
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
@@ -18,18 +32,20 @@
 
 <form method="get" class="card card-body shadow-sm mb-3">
     <div class="row g-2 align-items-end">
+
         <div class="col-md-4">
             <label class="form-label mb-1">Search</label>
-            <input name="q" value="@ViewBag.Q" class="form-control" placeholder="Product name..." />
+            <input name="q" value="@q" class="form-control" placeholder="Product name..." />
         </div>
 
         <div class="col-md-3">
             <label class="form-label mb-1">Category</label>
             <select class="form-select" name="categoryId">
-                <option value="">(All)</option>
+                <option value="" selected="@(string.IsNullOrEmpty(categoryIdStr) ? "selected" : null)">(All)</option>
                 @foreach (var c in categories)
                 {
-                    <option value="@c.Value" selected="@(ViewBag.CategoryId?.ToString() == c.Value)">@c.Text</option>
+                    var isSelected = (categoryIdStr == (c.Value ?? ""));
+                    <option value="@c.Value" selected="@(isSelected ? "selected" : null)">@c.Text</option>
                 }
             </select>
         </div>
@@ -37,38 +53,38 @@
         <div class="col-md-3">
             <label class="form-label mb-1">Stock</label>
             <select class="form-select" name="stock">
-                <option value="" selected="@(ViewBag.Stock == null || ViewBag.Stock == "")">(All)</option>
-                <option value="low" selected="@(ViewBag.Stock == "low")">Low stock</option>
+                <option value="" selected="@(string.IsNullOrEmpty(stock) ? "selected" : null)">(All)</option>
+                <option value="low" selected="@(stock == "low" ? "selected" : null)">Low stock</option>
+                <option value="out" selected="@(stock == "out" ? "selected" : null)">Out of stock</option>
             </select>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label class="form-label mb-1">Sort</label>
             <select class="form-select" name="sort">
-                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.Sort))">(Default)</option>
-                <option value="name_asc" selected="@(ViewBag.Sort == "name_asc")">Name A → Z</option>
-                <option value="name_desc" selected="@(ViewBag.Sort == "name_desc")">Name Z → A</option>
-                <option value="stock_asc" selected="@(ViewBag.Sort == "stock_asc")">Stock low → high</option>
-                <option value="stock_desc" selected="@(ViewBag.Sort == "stock_desc")">Stock high → low</option>
+                <option value="" selected="@(string.IsNullOrEmpty(sort) ? "selected" : null)">(Default)</option>
+                <option value="name_asc" selected="@(sort == "name_asc" ? "selected" : null)">Name A → Z</option>
+                <option value="name_desc" selected="@(sort == "name_desc" ? "selected" : null)">Name Z → A</option>
+                <option value="stock_asc" selected="@(sort == "stock_asc" ? "selected" : null)">Stock low → high</option>
+                <option value="stock_desc" selected="@(sort == "stock_desc" ? "selected" : null)">Stock high → low</option>
             </select>
         </div>
 
         <div class="col-md-3">
             <label class="form-label mb-1">Qty range</label>
             <div class="d-flex gap-2">
-                <input type="number" min="0" name="minQty" value="@ViewBag.MinQty" class="form-control" placeholder="Min" />
-                <input type="number" min="0" name="maxQty" value="@ViewBag.MaxQty" class="form-control" placeholder="Max" />
+                <input type="number" min="0" name="minQty" value="@minQty" class="form-control" placeholder="Min" />
+                <input type="number" min="0" name="maxQty" value="@maxQty" class="form-control" placeholder="Max" />
             </div>
         </div>
 
-
         <div class="col-md-2 d-flex gap-2">
             <button class="btn btn-primary w-100" type="submit">Filter</button>
-            <a class="btn btn-outline-secondary w-100" asp-action="Index">Clear</a>
+            <a class="btn btn-outline-secondary w-100" asp-action="Index" asp-route-pageSize="@pageSize">Clear</a>
         </div>
     </div>
 
-    <input type="hidden" name="pageSize" value="@(ViewBag.PageSize ?? Model.PageSize)" />
+   
 </form>
 
 <div class="card shadow-sm">
@@ -80,54 +96,83 @@
                     <th>Name</th>
                     <th>Category</th>
                     <th style="width:120px;">Price</th>
-                    <th style="width:140px;">Stock</th>
+                    <th style="width:170px;">Stock</th>
                     <th style="width:120px;">Active</th>
                     <th style="width:220px;" class="text-end">Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach (var p in Model.Items)
-                {
-                    <tr class="@(p.IsLowStock ? "table-warning" : "")">
-                        <td>
-                            @if (!string.IsNullOrWhiteSpace(p.ImagePath))
-                            {
-                                <img src="@p.ImagePath" style="width:60px;height:60px;object-fit:cover;border-radius:10px;" />
-                            }
-                            else
-                            {
-                                <span class="text-muted">-</span>
-                            }
-                        </td>
-                        <td class="fw-semibold">@p.Name</td>
-                        <td>@p.CategoryName</td>
-                        <td>@p.Price.ToString("0.00") €</td>
-                        <td>
-                            <span class="fw-semibold">@p.StockQty</span>
-                            <span class="text-muted"> / low ≤ @p.LowStockThreshold</span>
-                        </td>
-                        <td>
-                            @if (p.IsActive)
-                            {
-                                <span class="badge bg-success">Active</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Inactive</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <div class="btn-group" role="group">
-                                <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
 
-                                <form method="post" asp-action="Delete" asp-route-id="@p.Id"
-                                      onsubmit="return confirm('Delete product: @p.Name ?');">
-                                    @Html.AntiForgeryToken()
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                                </form>
-                            </div>
+            <tbody>
+                @if (Model.Items == null || !Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            No products found.
                         </td>
                     </tr>
+                }
+                else
+                {
+                    foreach (var p in Model.Items)
+                    {
+                        var isLow = p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10);
+                        var rowClass = isLow ? "table-warning" : "";
+
+                        <tr class="@rowClass">
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                                {
+                                    <img src="@p.ImagePath" style="width:60px;height:60px;object-fit:cover;border-radius:10px;" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+
+                            <td class="fw-semibold">
+                                @p.Name
+                                @if (isLow)
+                                {
+                                    <span class="badge bg-warning text-dark ms-2">LOW</span>
+                                }
+                            </td>
+
+                            <td>@p.CategoryName</td>
+
+                            <td>@p.Price.ToString("0.00") €</td>
+
+                            <td>
+                                <span class="fw-semibold">@p.StockQty</span>
+                                <span class="text-muted"> / low ≤ @(p.LowStockThreshold > 0 ? p.LowStockThreshold : 10)</span>
+                            </td>
+
+                            <td>
+                                @if (p.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <div class="btn-group" role="group">
+                                    <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+
+                                    <form method="post"
+                                          asp-action="Delete"
+                                          asp-route-id="@p.Id"
+                                          onsubmit="return confirm('Delete product: @p.Name ?');">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
@@ -135,7 +180,7 @@
 </div>
 
 @{
-    var pager = new Bevera.Models.ViewModels.PaginationViewModel
+    var pager = new PaginationViewModel
     {
         Page = Model.Page,
         TotalPages = Model.TotalPages,
@@ -143,15 +188,14 @@
         Action = "Index",
         RouteValues = new Dictionary<string, string?>
         {
-            ["q"] = ViewBag.Q as string,
-            ["categoryId"] = ViewBag.CategoryId?.ToString(),
-            ["stock"] = ViewBag.Stock as string,
-            ["sort"] = ViewBag.Sort as string,
-            ["minQty"] = ViewBag.MinQty?.ToString(),
-            ["maxQty"] = ViewBag.MaxQty?.ToString(),
-            ["pageSize"] = (ViewBag.PageSize ?? Model.PageSize).ToString()
+            ["q"] = q,
+            ["categoryId"] = categoryIdStr,
+            ["stock"] = stock,
+            ["sort"] = sort,
+            ["minQty"] = minQty,
+            ["maxQty"] = maxQty,
+            ["pageSize"] = pageSize
         }
-
     };
 }
 <partial name="_Pagination" model="pager" />

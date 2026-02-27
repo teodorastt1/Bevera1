@@ -261,6 +261,8 @@ namespace Bevera.Controllers
                 PhoneNumber = user.PhoneNumber ?? "",
                 Address = user.Address ?? ""
             };
+            TempData["ToastMessage"] = "Данните бяха запазени успешно.";
+            TempData["ToastType"] = "success";
 
             return View(vm);
         }

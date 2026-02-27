@@ -12,8 +12,8 @@
         <div class="text-muted small">@Model.Email</div>
     </div>
     <div class="d-flex gap-2">
-        <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-primary">Edit role</a>
-        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-primary">Промени роля</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Назад</a>
     </div>
 </div>
 
@@ -22,7 +22,7 @@
 
         <div class="row g-3">
             <div class="col-md-6">
-                <div class="text-muted small">Email</div>
+                <div class="text-muted small">Имейл</div>
                 <div class="fw-semibold">@Model.Email</div>
             </div>
 
@@ -38,7 +38,7 @@
 
             <div class="col-md-6">
                 <div class="text-muted small">Регистрация</div>
-                <div class="fw-semibold">@(createdAt.HasValue ? createdAt.Value.ToString("dd.MM.yyyy") : "-")</div>
+                <div class="fw-semibold">@(createdAt.HasValue? createdAt.Value.ToString("dd.MM.yyyy") : "-")</div>
             </div>
 
             <div class="col-md-6">

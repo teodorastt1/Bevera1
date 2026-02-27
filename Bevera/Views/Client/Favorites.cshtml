@@ -4,8 +4,56 @@
     ViewData["Title"] = "Любими";
 }
 
+<style>
+    .fav-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+    }
+
+    .fav-card {
+        border-radius: 22px;
+        transition: transform .18s ease, box-shadow .18s ease;
+        cursor: pointer;
+    }
+
+        .fav-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 40px rgba(0,0,0,.10) !important;
+        }
+
+    .fav-imgwrap {
+        background: linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,0));
+    }
+
+    .price-old {
+        text-decoration: line-through;
+        color: rgba(0,0,0,.45);
+        font-size: .92rem;
+    }
+
+    .price-new {
+        font-weight: 700;
+    }
+
+    .badge-promo {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        border-radius: 999px;
+        padding: .35rem .6rem;
+        font-weight: 700;
+        font-size: .82rem;
+        background: #f5b301;
+        color: #111;
+        box-shadow: 0 10px 24px rgba(245,179,1,.25);
+    }
+</style>
+
 <div class="container py-4">
-    <h2 class="mb-3" style="font-family:'Playfair Display',serif;">Любими</h2>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <h2 class="fav-title mb-0">Любими</h2>
+        <span class="text-muted small">Запазените от теб продукти.</span>
+    </div>
 
     @if (Model == null || !Model.Any())
     {
@@ -17,32 +65,55 @@
             @foreach (var f in Model)
             {
                 var p = f.Product;
-                var img = p?.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
-                ?? p?.Images?.FirstOrDefault()?.ImagePath
+                if (p == null) { continue; }
+
+                var img = p.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
+                ?? p.Images?.FirstOrDefault()?.ImagePath
                 ?? "/images/image-1.jpg";
 
+                var hasPromo = p.DiscountPercent.HasValue && p.DiscountPercent.Value > 0;
+                var oldPrice = p.Price;
+                var newPrice = p.EffectivePrice;
+
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                        <div class="p-3 bg-light">
-                            <img src="@img" alt="@p?.Name" style="width:100%;height:220px;object-fit:contain;" />
+                    <div class="card border-0 shadow-sm overflow-hidden h-100 fav-card reveal"
+                         data-href="@Url.Action("Product", "Client", new { id = p.Id })">
+
+                        <div class="position-relative p-3 fav-imgwrap">
+                            @if (hasPromo)
+                            {
+                                <div class="badge-promo">-%@p.DiscountPercent.Value</div>
+                            }
+                            <img src="@img" alt="@p.Name" style="width:100%;height:230px;object-fit:contain;" />
                         </div>
 
                         <div class="card-body">
-                            <div class="fw-bold">@p?.Name</div>
-                            <div class="text-muted">@p?.Price.ToString("0.00") €</div>
+                            <div class="fw-bold">@p.Name</div>
+
+                            @if (hasPromo)
+                            {
+                                <div class="d-flex align-items-baseline gap-2 mt-1">
+                                    <div class="price-old">@oldPrice.ToString("0.00") €</div>
+                                    <div class="price-new">@newPrice.ToString("0.00") €</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted mt-1">@oldPrice.ToString("0.00") €</div>
+                            }
 
                             <div class="d-flex gap-2 mt-3">
                                 <a class="btn btn-sm btn-outline-dark rounded-pill"
-                                       asp-controller="Client" asp-action="Product" asp-route-id="@p?.Id">
-                                    Виж
+                                       asp-controller="Client" asp-action="Product" asp-route-id="@p.Id">
+                                    <i class="bi bi-eye me-1"></i> Виж
                                 </a>
 
                                 <form asp-controller="Client" asp-action="ToggleFavorite" method="post" class="ms-auto">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="productId" value="@p?.Id" />
-                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    <input type="hidden" name="productId" value="@p.Id" />
+                                    <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
-                                        <i class="bi bi-heartbreak"></i> Махни
+                                        <i class="bi bi-heartbreak me-1"></i> Премахни
                                     </button>
                                 </form>
                             </div>

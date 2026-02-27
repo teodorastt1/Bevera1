@@ -56,6 +56,14 @@
 
             .page-content {
                 padding-top: 72px;
+                opacity: 0;
+                transform: translateY(12px);
+                transition: opacity .45s ease, transform .45s ease;
+            }
+
+            body.page-loaded .page-content {
+                opacity: 1;
+                transform: none;
             }
 
             body.home .page-content {
@@ -152,21 +160,22 @@
 
                     <ul class="navbar-nav me-3 align-items-lg-center">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Начало</a>
                         </li>
 
                         <li class="nav-item mega-wrapper" id="megaWrapper">
                             <a class="nav-link mega-toggle" href="#" onclick="return false;" aria-haspopup="true" aria-expanded="false">
-                                ПО КАТЕГОРИИ <span class="ms-1">▾</span>
+                                Категории <span class="ms-1">▾</span>
                             </a>
                             @await Component.InvokeAsync("CategoriesMenu")
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" href="/#footer">About</a>
+                            <a class="nav-link" href="/#footer">За нас</a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link" href="/#footer">Contact</a>
+                            <a class="nav-link" href="/#footer">Контакт</a>
                         </li>
                     </ul>
 
@@ -188,6 +197,7 @@
     </header>
 
     <main class="page-content">
+
         @* JS flash messages *@
         @{
             var msg = TempData["FlashMessage"] as string;
@@ -202,6 +212,16 @@
         @if (!string.IsNullOrWhiteSpace(msg))
         {
             <div class="js-flash" data-message="@msg" data-type="@(typ ?? "info")"></div>
+        }
+
+        @* ✅ Auto-toast via TempData *@
+        @{
+            var toastMsg = TempData["ToastMessage"] as string;
+            var toastType = TempData["ToastType"] as string; // success | danger | warning | info
+        }
+        @if (!string.IsNullOrWhiteSpace(toastMsg))
+        {
+            <div class="js-toast" data-message="@toastMsg" data-type="@(toastType ?? "info")"></div>
         }
 
         @RenderBody()
@@ -234,7 +254,24 @@
                 }, 4000);
             }
 
-            // cart badge loader (as you had it)
+            // ✅ Smooth load (fade + slide up)
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.classList.add('page-loaded');
+            });
+
+            // ✅ Auto-toast from TempData (.js-toast)
+            (function () {
+                const el = document.querySelector('.js-toast');
+                if (!el) return;
+
+                const msg = el.getAttribute('data-message');
+                const type = el.getAttribute('data-type') || 'info';
+                if (!msg) return;
+
+                showToast(msg, type);
+            })();
+
+            // cart badge loader
             (async function () {
                 try {
                     const res = await fetch('/Cart/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });

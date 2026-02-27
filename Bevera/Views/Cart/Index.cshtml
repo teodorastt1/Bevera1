@@ -87,7 +87,7 @@
 </style>
 
 <div class="container py-4">
-    <div class="cart-title mb-3">Your Shopping Cart</div>
+    <div class="cart-title mb-3">Вашата количка</div>
 
     <div class="cart-card p-3">
         @if (Model == null || !Model.Any())
@@ -100,11 +100,11 @@
                 <table class="table align-middle cart-table mb-0">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th style="width:140px;">Image</th>
-                            <th style="width:140px;">Unit Price</th>
-                            <th style="width:220px;">Quantity</th>
-                            <th style="width:140px;">Total Price</th>
+                            <th>Продукт</th>
+                            <th style="width:140px;">Снимка</th>
+                            <th style="width:140px;">Ед. цена</th>
+                            <th style="width:220px;">Количество</th>
+                            <th style="width:140px;">Общо</th>
                             <th style="width:60px;"></th>
                         </tr>
                     </thead>
@@ -123,7 +123,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="productId" value="@item.ProductId" />
                                             <input type="hidden" name="qty" value="@(item.Quantity - 1)" />
-                                            <button class="qty-btn" type="submit">-</button>
+                                            <button class="qty-btn" type="submit" aria-label="Намали количеството">-</button>
                                         </form>
 
                                         <div class="qty-val">@item.Quantity</div>
@@ -132,7 +132,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="productId" value="@item.ProductId" />
                                             <input type="hidden" name="qty" value="@(item.Quantity + 1)" />
-                                            <button class="qty-btn" type="submit">+</button>
+                                            <button class="qty-btn" type="submit" aria-label="Увеличи количеството">+</button>
                                         </form>
                                     </div>
                                 </td>
@@ -141,7 +141,7 @@
                                     <form asp-controller="Cart" asp-action="Remove" method="post" class="m-0">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="productId" value="@item.ProductId" />
-                                        <button class="btn-remove" title="Remove" type="submit">✖</button>
+                                        <button class="btn-remove" title="Премахни" type="submit" aria-label="Премахни продукта">✖</button>
                                     </form>
                                 </td>
                             </tr>
@@ -152,14 +152,14 @@
 
             <div class="d-flex justify-content-end mt-3">
                 <div class="fw-semibold" style="color:var(--c2);">
-                    Grand Total : <span style="color:var(--c3);">@grand.ToString("0.00") €</span>
+                    Общо: <span style="color:var(--c3);">@grand.ToString("0.00") €</span>
                 </div>
             </div>
 
             <div class="d-flex flex-wrap gap-2 justify-content-between mt-3">
-                <a class="btn-soft btn-continue" asp-controller="Home" asp-action="Index">Continue Shopping</a>
-                <a class="btn-soft btn-update" asp-controller="Cart" asp-action="Index">Update Cart</a>
-                <a class="btn-soft btn-checkout" asp-controller="Cart" asp-action="Checkout">Checkout</a>
+                <a class="btn-soft btn-continue" asp-controller="Home" asp-action="Index">Продължи с пазаруването</a>
+                <a class="btn-soft btn-update" asp-controller="Cart" asp-action="Index">Обнови количката</a>
+                <a class="btn-soft btn-checkout" asp-controller="Cart" asp-action="Checkout">Поръчай</a>
             </div>
         }
     </div>

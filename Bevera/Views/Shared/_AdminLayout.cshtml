@@ -1,13 +1,22 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using Bevera.Data
+@using Bevera.Models
 @inject SignInManager<Bevera.Models.ApplicationUser> SignInManager
 @inject UserManager<Bevera.Models.ApplicationUser> UserManager
+@inject ApplicationDbContext Db
+
+@{
+    var adminId = UserManager.GetUserId(User);
+    var adminUser = !string.IsNullOrEmpty(adminId) ? Db.Users.FirstOrDefault(x => x.Id == adminId) : null;
+    var adminLabel = adminUser?.Email ?? (User.Identity?.Name ?? "Админ");
+}
 
 <!DOCTYPE html>
 <html lang="bg">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Bevera Admin</title>
+    <title>@ViewData["Title"] - Bevera Админ</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
@@ -18,29 +27,29 @@
 
         <aside class="admin-sidebar">
             <div class="admin-brand">Bevera</div>
-            <div class="admin-sub">Admin Panel</div>
+            <div class="admin-sub">Админ панел</div>
 
             <nav class="admin-nav">
                 <a asp-controller="Admin" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
-                    <span>🏠</span> Dashboard
+                    <span>🏠</span> Табло
                 </a>
 
-                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Catalog</div>
+                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Каталог</div>
                 <a asp-controller="AdminCategories" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCategories" ? "active" : "")">
-                    <span>🧾</span> Categories
+                    <span>🧾</span> Категории
                 </a>
                 <a asp-controller="AdminProducts" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminProducts" ? "active" : "")">
-                    <span>🥤</span> Products
+                    <span>🥤</span> Продукти
                 </a>
 
-                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Orders</div>
+                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Поръчки</div>
                 <a asp-controller="Orders" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")">
-                    <span>📦</span> Orders
+                    <span>📦</span> Поръчки
                 </a>
 
-                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Users</div>
+                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Потребители</div>
                 <a asp-controller="AdminRoles" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminRoles" ? "active" : "")">
-                    <span>👤</span> Roles / Users
+                    <span>👤</span> Роли / Потребители
                 </a>
             </nav>
         </aside>
@@ -49,11 +58,14 @@
             <div class="admin-topbar">
                 <div class="admin-title">@ViewData["Title"]</div>
 
-                <div class="admin-user">
-                    <span>@User.Identity?.Name</span>
+                <div class="admin-user d-flex align-items-center gap-3">
+                    <div class="text-end">
+                        <div class="small text-muted" style="font-weight:700;">Здравей, Админ</div>
+                        <div style="font-weight:700;">@adminLabel</div>
+                    </div>
 
                     <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="d-inline">
-                        <button class="btn btn-sm btn-outline-secondary" type="submit">Logout</button>
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">Изход</button>
                     </form>
                 </div>
             </div>

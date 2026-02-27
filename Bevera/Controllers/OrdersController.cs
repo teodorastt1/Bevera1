@@ -25,33 +25,111 @@ namespace Bevera.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index(string? status, string? q, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(
+    string? status,
+    string? q,
+    string? name,
+    string? email,
+    DateTime? from,
+    DateTime? to,
+    string? payment,
+    string? sort,
+    int page = 1,
+    int pageSize = 10)
         {
             IQueryable<Order> query = _context.Orders
                 .Include(o => o.Client)
                 .AsNoTracking();
 
+            // ===== Status =====
             if (!string.IsNullOrWhiteSpace(status))
                 query = query.Where(o => o.Status == status);
 
+            // ===== Quick search (id / email / name) =====
             if (!string.IsNullOrWhiteSpace(q))
             {
                 q = q.Trim();
+
                 query = query.Where(o =>
                     o.Id.ToString().Contains(q) ||
-                    (o.Client.Email ?? "").Contains(q) ||
-                    ((o.Client.FirstName ?? "") + " " + (o.Client.LastName ?? "")).Contains(q));
+                    (o.Email != null && o.Email.Contains(q)) ||
+                    (o.FullName != null && o.FullName.Contains(q)) ||
+                    (o.Client != null && o.Client.Email.Contains(q))
+                );
             }
 
-            query = query.OrderByDescending(o => o.ChangedAt);
+            // ===== Name =====
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                name = name.Trim();
+                query = query.Where(o => o.FullName != null && o.FullName.Contains(name));
+            }
 
-            var paged = await query.ToPagedAsync(page, pageSize);
+            // ===== Email =====
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                email = email.Trim();
+                query = query.Where(o =>
+                    (o.Email != null && o.Email.Contains(email)) ||
+                    (o.Client != null && o.Client.Email.Contains(email))
+                );
+            }
 
+            // ===== Date range =====
+            if (from.HasValue)
+                query = query.Where(o => o.ChangedAt >= from.Value.Date);
+
+            if (to.HasValue)
+                query = query.Where(o => o.ChangedAt < to.Value.Date.AddDays(1));
+
+            // ===== Payment =====
+            if (!string.IsNullOrWhiteSpace(payment))
+                query = query.Where(o => o.PaymentStatus == payment);
+
+            // ===== Sorting =====
+            sort = string.IsNullOrWhiteSpace(sort) ? "changed_desc" : sort;
+
+            query = sort switch
+            {
+                "changed_asc" => query.OrderBy(o => o.ChangedAt),
+                "total_asc" => query.OrderBy(o => o.Total),
+                "total_desc" => query.OrderByDescending(o => o.Total),
+                "id_asc" => query.OrderBy(o => o.Id),
+                "id_desc" => query.OrderByDescending(o => o.Id),
+                _ => query.OrderByDescending(o => o.ChangedAt)
+            };
+
+            // ===== Paging validation =====
+            if (page < 1) page = 1;
+            if (pageSize < 5) pageSize = 5;
+
+            var totalItems = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // ===== ViewBag (за да пазим филтрите) =====
             ViewBag.Status = status;
             ViewBag.Q = q;
+            ViewBag.Name = name;
+            ViewBag.Email = email;
+            ViewBag.From = from;
+            ViewBag.To = to;
+            ViewBag.Payment = payment;
+            ViewBag.Sort = sort;
             ViewBag.PageSize = pageSize;
 
-            return View(paged);
+            var vm = new PagedResult<Order>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            return View(vm);
         }
 
         public async Task<IActionResult> Details(int id)
