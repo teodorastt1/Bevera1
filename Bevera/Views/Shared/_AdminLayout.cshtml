@@ -1,17 +1,33 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using Bevera.Data
 @using Bevera.Models
-@inject SignInManager<Bevera.Models.ApplicationUser> SignInManager
-@inject UserManager<Bevera.Models.ApplicationUser> UserManager
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
 @inject ApplicationDbContext Db
 
 @{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
     var adminId = UserManager.GetUserId(User);
-    var adminUser = !string.IsNullOrEmpty(adminId) ? Db.Users.FirstOrDefault(x => x.Id == adminId) : null;
-    var adminLabel = adminUser?.Email ?? (User.Identity?.Name ?? "Админ");
+    var adminUser = !string.IsNullOrEmpty(adminId)
+        ? Db.Users.FirstOrDefault(x => x.Id == adminId)
+        : null;
+
+    var adminLabel = adminUser?.Email ?? (User.Identity?.Name ?? "Администратор");
+
     var adminUnreadCount = !string.IsNullOrEmpty(adminId)
         ? Db.AppNotifications.Count(x => x.UserId == adminId && !x.IsRead)
         : 0;
+
+    bool IsCurrent(string controller, string? action = null)
+    {
+        if (string.IsNullOrWhiteSpace(action))
+            return currentController == controller;
+
+        return currentController == controller && currentAction == action;
+    }
 }
 
 <!DOCTYPE html>
@@ -22,7 +38,7 @@
     <title>@ViewData["Title"] - Bevera Админ</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 </head>
 
@@ -31,36 +47,82 @@
 
         <aside class="admin-sidebar">
             <div class="admin-brand">Bevera</div>
-            <div class="admin-sub">Админ панел</div>
+            <div class="admin-sub">Административен панел</div>
 
             <nav class="admin-nav">
-                <a asp-controller="Admin" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                <a asp-controller="Admin"
+                       asp-action="Index"
+                       class="@(IsCurrent("Admin") ? "active" : "")">
                     <span>🏠</span> Табло
                 </a>
 
                 <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Каталог</div>
-                <a asp-controller="AdminCategories" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminCategories" ? "active" : "")">
+
+                <a asp-controller="AdminCategories"
+                       asp-action="Index"
+                       class="@(IsCurrent("AdminCategories") ? "active" : "")">
                     <span>🧾</span> Категории
                 </a>
-                <a asp-controller="AdminProducts" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminProducts" ? "active" : "")">
+
+                <a asp-controller="AdminProducts"
+                       asp-action="Index"
+                       class="@(IsCurrent("AdminProducts") ? "active" : "")">
                     <span>🥤</span> Продукти
                 </a>
 
-                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Поръчки</div>
-                <a asp-controller="Orders" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")">
-                    <span>📦</span> Поръчки
-                </a>
-
-                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Потребители</div>
-                <a asp-controller="AdminRoles" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminRoles" ? "active" : "")">
-                    <span>👤</span> Роли / Потребители
-                </a>
-                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Промоции</div>
-                <a asp-controller="AdminPromotions" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminPromotions" ? "active" : "")">
+                <a asp-controller="AdminPromotions"
+                       asp-action="Index"
+                       class="@(IsCurrent("AdminPromotions") ? "active" : "")">
                     <span>🔥</span> Промоции
                 </a>
 
+                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Поръчки и клиенти</div>
 
+                <a asp-controller="Orders"
+                       asp-action="Index"
+                       class="@(IsCurrent("Orders") ? "active" : "")">
+                    <span>📦</span> Поръчки
+                </a>
+
+                <a asp-controller="Reviews"
+                       asp-action="Index"
+                       class="@(IsCurrent("Reviews") ? "active" : "")">
+                    <span>⭐</span> Ревюта
+                </a>
+
+                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Доставки и финанси</div>
+
+                <a asp-controller="AdminSupply"
+                       asp-action="Index"
+                       class="@(IsCurrent("AdminSupply", "Index") ? "active" : "")">
+                    <span>📊</span> Supply табло
+                </a>
+
+                <a asp-controller="AdminSupply"
+                       asp-action="Distributors"
+                       class="@(IsCurrent("AdminSupply", "Distributors") || IsCurrent("AdminSupply", "CreateDistributor") || IsCurrent("AdminSupply", "EditDistributor") || IsCurrent("AdminSupply", "DistributorProducts") || IsCurrent("AdminSupply", "AddDistributorProduct") ? "active" : "")">
+                    <span>🚚</span> Дистрибутори
+                </a>
+
+                <a asp-controller="AdminSupply"
+                       asp-action="PurchaseOrders"
+                       class="@(IsCurrent("AdminSupply", "PurchaseOrders") || IsCurrent("AdminSupply", "CreatePurchaseOrder") || IsCurrent("AdminSupply", "PurchaseOrderDetails") || IsCurrent("AdminSupply", "AddPurchaseOrderItem") ? "active" : "")">
+                    <span>🧾</span> Заявки към доставчици
+                </a>
+
+                <a asp-controller="AdminSupply"
+                       asp-action="Finance"
+                       class="@(IsCurrent("AdminSupply", "Finance") ? "active" : "")">
+                    <span>💰</span> Финанси
+                </a>
+
+                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Управление</div>
+
+                <a asp-controller="AdminRoles"
+                       asp-action="Index"
+                       class="@(IsCurrent("AdminRoles") ? "active" : "")">
+                    <span>👤</span> Роли и потребители
+                </a>
             </nav>
         </aside>
 
@@ -70,14 +132,16 @@
 
                 <div class="admin-user d-flex align-items-center gap-3">
                     <div class="text-end">
-                        <div class="small text-muted" style="font-weight:700;">Здравей, Админ</div>
+                        <div class="small text-muted" style="font-weight:700;">Здравей, администратор</div>
                         <div style="font-weight:700;">@adminLabel</div>
                     </div>
 
-                    <a asp-controller="Notifications" asp-action="Index"
+                    <a asp-controller="Notifications"
+                           asp-action="Index"
                            class="position-relative text-dark text-decoration-none"
                            title="Нотификации">
                         <i class="bi bi-bell" style="font-size:1.2rem;"></i>
+
                         @if (adminUnreadCount > 0)
                         {
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -91,6 +155,22 @@
                     </form>
                 </div>
             </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Затвори"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Затвори"></button>
+                </div>
+            }
 
             @RenderBody()
         </main>

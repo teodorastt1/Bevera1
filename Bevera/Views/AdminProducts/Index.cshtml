@@ -1,104 +1,182 @@
-﻿@using Bevera.Models.ViewModels
+﻿@using Bevera.Models.ViewModel
+@using Bevera.Models.ViewModels
 @using Microsoft.AspNetCore.Mvc.Rendering
-@model PagedResult<AdminProductRowViewModel>
-
+@model Bevera.Models.ViewModels.PagedResult<Bevera.Models.ViewModel.AdminProductRowViewModel>
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Продукти";
 
     var categories = ViewBag.Categories as List<SelectListItem> ?? new();
+    var brands = ViewBag.Brands as List<SelectListItem> ?? new();
 
     string q = ViewBag.Q as string ?? "";
     string stock = ViewBag.Stock as string ?? "";
+    string active = ViewBag.Active as string ?? "";
     string sort = ViewBag.Sort as string ?? "";
 
     string categoryIdStr = ViewBag.CategoryId?.ToString() ?? "";
+    string brandIdStr = ViewBag.BrandId?.ToString() ?? "";
 
     string minQty = ViewBag.MinQty as string ?? "";
     string maxQty = ViewBag.MaxQty as string ?? "";
+    string minMl = ViewBag.MinMl as string ?? "";
+    string maxMl = ViewBag.MaxMl as string ?? "";
 
     string pageSize = (ViewBag.PageSize ?? Model.PageSize).ToString();
 }
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+<div class="page-header-bevera mb-4">
     <div>
-        <h1 class="mb-1">@ViewData["Title"]</h1>
-        <div class="text-muted small">Общо продукти: <strong>@Model.TotalItems</strong></div>
+        <div class="page-header-bevera__eyebrow">Каталог</div>
+        <h1 class="page-header-bevera__title">Управление на продукти</h1>
+        <p class="page-header-bevera__text">
+            Контролирай наличности, цени, промоции и видимостта на продуктите.
+        </p>
     </div>
-    <div class="d-flex gap-2">
-        <a class="btn btn-success" asp-action="Create">+ Add Product</a>
+
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-warning bevera-btn-main" asp-action="Create">
+            + Нов продукт
+        </a>
     </div>
 </div>
 
-<form method="get" class="card card-body shadow-sm mb-3">
-    <div class="row g-2 align-items-end">
+<div class="products-admin-stats mb-4">
+    <div class="products-admin-stat">
+        <div class="products-admin-stat__label">Общо продукти</div>
+        <div class="products-admin-stat__value">@Model.TotalItems</div>
+    </div>
+    <div class="products-admin-stat">
+        <div class="products-admin-stat__label">На страница</div>
+        <div class="products-admin-stat__value">@Model.PageSize</div>
+    </div>
+    <div class="products-admin-stat">
+        <div class="products-admin-stat__label">Текуща страница</div>
+        <div class="products-admin-stat__value">@Model.Page</div>
+    </div>
+</div>
 
-        <div class="col-md-4">
-            <label class="form-label mb-1">Search</label>
-            <input name="q" value="@q" class="form-control" placeholder="Product name..." />
+<form method="get" class="bevera-filter-card mb-4">
+    <div class="row g-3 align-items-end">
+
+        <div class="col-lg-4">
+            <label class="form-label">Търсене</label>
+            <input name="q" value="@q" class="form-control" placeholder="Име, описание или SKU..." />
         </div>
 
-        <div class="col-md-3">
-            <label class="form-label mb-1">Category</label>
+        <div class="col-lg-3">
+            <label class="form-label">Категория</label>
             <select class="form-select" name="categoryId">
-                <option value="" selected="@(string.IsNullOrEmpty(categoryIdStr) ? "selected" : null)">(All)</option>
+                <option value="">Всички</option>
                 @foreach (var c in categories)
                 {
-                    var isSelected = (categoryIdStr == (c.Value ?? ""));
-                    <option value="@c.Value" selected="@(isSelected ? "selected" : null)">@c.Text</option>
+                    <option value="@c.Value" selected="@(categoryIdStr == (c.Value ?? "") ? "selected" : null)">
+                        @c.Text
+                    </option>
                 }
             </select>
         </div>
 
-        <div class="col-md-3">
-            <label class="form-label mb-1">Stock</label>
+        <div class="col-lg-2">
+            <label class="form-label">Марка</label>
+            <select class="form-select" name="brandId">
+                <option value="">Всички</option>
+                @foreach (var b in brands)
+                {
+                    <option value="@b.Value" selected="@(brandIdStr == (b.Value ?? "") ? "selected" : null)">
+                        @b.Text
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-lg-3">
+            <label class="form-label">Наличност</label>
             <select class="form-select" name="stock">
-                <option value="" selected="@(string.IsNullOrEmpty(stock) ? "selected" : null)">(All)</option>
-                <option value="low" selected="@(stock == "low" ? "selected" : null)">Low stock</option>
-                <option value="out" selected="@(stock == "out" ? "selected" : null)">Out of stock</option>
+                <option value="">Всички</option>
+                <option value="in" selected="@(stock == "in" ? "selected" : null)">В наличност</option>
+                <option value="low" selected="@(stock == "low" ? "selected" : null)">Ниска наличност</option>
+                <option value="out" selected="@(stock == "out" ? "selected" : null)">Изчерпани</option>
             </select>
         </div>
 
-        <div class="col-md-2">
-            <label class="form-label mb-1">Sort</label>
+        <div class="col-lg-2">
+            <label class="form-label">Активност</label>
+            <select class="form-select" name="active">
+                <option value="">Всички</option>
+                <option value="yes" selected="@(active == "yes" ? "selected" : null)">Активни</option>
+                <option value="no" selected="@(active == "no" ? "selected" : null)">Неактивни</option>
+            </select>
+        </div>
+
+        <div class="col-lg-2">
+            <label class="form-label">Сортиране</label>
             <select class="form-select" name="sort">
-                <option value="" selected="@(string.IsNullOrEmpty(sort) ? "selected" : null)">(Default)</option>
-                <option value="name_asc" selected="@(sort == "name_asc" ? "selected" : null)">Name A → Z</option>
-                <option value="name_desc" selected="@(sort == "name_desc" ? "selected" : null)">Name Z → A</option>
-                <option value="stock_asc" selected="@(sort == "stock_asc" ? "selected" : null)">Stock low → high</option>
-                <option value="stock_desc" selected="@(sort == "stock_desc" ? "selected" : null)">Stock high → low</option>
+                <option value="">По подразбиране</option>
+                <option value="name_asc" selected="@(sort == "name_asc" ? "selected" : null)">Име А-Я</option>
+                <option value="name_desc" selected="@(sort == "name_desc" ? "selected" : null)">Име Я-А</option>
+                <option value="price_asc" selected="@(sort == "price_asc" ? "selected" : null)">Цена ↑</option>
+                <option value="price_desc" selected="@(sort == "price_desc" ? "selected" : null)">Цена ↓</option>
+                <option value="cost_asc" selected="@(sort == "cost_asc" ? "selected" : null)">Доставна цена ↑</option>
+                <option value="cost_desc" selected="@(sort == "cost_desc" ? "selected" : null)">Доставна цена ↓</option>
+                <option value="stock_asc" selected="@(sort == "stock_asc" ? "selected" : null)">Наличност ↑</option>
+                <option value="stock_desc" selected="@(sort == "stock_desc" ? "selected" : null)">Наличност ↓</option>
+                <option value="ml_asc" selected="@(sort == "ml_asc" ? "selected" : null)">Мл ↑</option>
+                <option value="ml_desc" selected="@(sort == "ml_desc" ? "selected" : null)">Мл ↓</option>
             </select>
         </div>
 
-        <div class="col-md-3">
-            <label class="form-label mb-1">Qty range</label>
-            <div class="d-flex gap-2">
-                <input type="number" min="0" name="minQty" value="@minQty" class="form-control" placeholder="Min" />
-                <input type="number" min="0" name="maxQty" value="@maxQty" class="form-control" placeholder="Max" />
-            </div>
+        <div class="col-lg-2">
+            <label class="form-label">Мин. наличност</label>
+            <input type="number" min="0" name="minQty" value="@minQty" class="form-control" placeholder="0" />
         </div>
 
-        <div class="col-md-2 d-flex gap-2">
-            <button class="btn btn-primary w-100" type="submit">Filter</button>
-            <a class="btn btn-outline-secondary w-100" asp-action="Index" asp-route-pageSize="@pageSize">Clear</a>
+        <div class="col-lg-2">
+            <label class="form-label">Макс. наличност</label>
+            <input type="number" min="0" name="maxQty" value="@maxQty" class="form-control" placeholder="999" />
+        </div>
+
+        <div class="col-lg-2">
+            <label class="form-label">Мин. мл</label>
+            <input type="number" min="0" name="minMl" value="@minMl" class="form-control" placeholder="0" />
+        </div>
+
+        <div class="col-lg-2">
+            <label class="form-label">Макс. мл</label>
+            <input type="number" min="0" name="maxMl" value="@maxMl" class="form-control" placeholder="2000" />
+        </div>
+
+        <div class="col-lg-2">
+            <label class="form-label">На страница</label>
+            <select class="form-select" name="pageSize">
+                <option value="5" selected="@(pageSize == "5" ? "selected" : null)">5</option>
+                <option value="10" selected="@(pageSize == "10" ? "selected" : null)">10</option>
+                <option value="20" selected="@(pageSize == "20" ? "selected" : null)">20</option>
+            </select>
+        </div>
+
+        <div class="col-lg-4 d-flex gap-2">
+            <button class="btn btn-primary w-100 bevera-btn-soft" type="submit">Филтрирай</button>
+            <a class="btn btn-outline-secondary w-100" asp-action="Index">Изчисти</a>
         </div>
     </div>
-
-   
 </form>
 
-<div class="card shadow-sm">
+<div class="bevera-table-card">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+        <table class="table align-middle admin-products-table mb-0">
+            <thead>
                 <tr>
-                    <th style="width:80px;">Image</th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th style="width:120px;">Price</th>
-                    <th style="width:170px;">Stock</th>
-                    <th style="width:120px;">Active</th>
-                    <th style="width:220px;" class="text-end">Actions</th>
+                    <th style="width:90px;">Снимка</th>
+                    <th>Продукт</th>
+                    <th>Категория</th>
+                    <th>Цена</th>
+                    <th>Доставна</th>
+                    <th>Крайна</th>
+                    <th>Печалба</th>
+                    <th>Склад</th>
+                    <th>Статус</th>
+                    <th class="text-end" style="width:220px;">Действия</th>
                 </tr>
             </thead>
 
@@ -106,8 +184,8 @@
                 @if (Model.Items == null || !Model.Items.Any())
                 {
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            No products found.
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            Няма намерени продукти по зададените критерии.
                         </td>
                     </tr>
                 }
@@ -115,59 +193,113 @@
                 {
                     foreach (var p in Model.Items)
                     {
-                        var isLow = p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10);
-                        var rowClass = isLow ? "table-warning" : "";
-
-                        <tr class="@rowClass">
+                        <tr>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(p.ImagePath))
                                 {
-                                    <img src="@p.ImagePath" style="width:60px;height:60px;object-fit:cover;border-radius:10px;" />
+                                    <img src="@p.ImagePath" class="admin-product-thumb" alt="@p.Name" />
                                 }
                                 else
                                 {
-                                    <span class="text-muted">-</span>
+                                    <div class="admin-product-thumb admin-product-thumb--placeholder">—</div>
                                 }
                             </td>
 
-                            <td class="fw-semibold">
-                                @p.Name
-                                @if (isLow)
+                            <td>
+                                <div class="fw-bold">@p.Name</div>
+
+                                @if (!string.IsNullOrWhiteSpace(p.SKU))
                                 {
-                                    <span class="badge bg-warning text-dark ms-2">LOW</span>
+                                    <div class="small text-muted">SKU: @p.SKU</div>
                                 }
+
+                                <div class="small text-muted mt-1">
+                                    @if (!string.IsNullOrWhiteSpace(p.BrandName))
+                                    {
+                                        <span>@p.BrandName</span>
+                                    }
+
+                                    @if (p.Ml.HasValue)
+                                    {
+                                        <span class="ms-2">@p.Ml мл</span>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(p.PackageType))
+                                    {
+                                        <span class="ms-2">@p.PackageType</span>
+                                    }
+                                </div>
                             </td>
 
                             <td>@p.CategoryName</td>
 
-                            <td>@p.Price.ToString("0.00") €</td>
+                            <td>@p.Price.ToString("0.00") лв.</td>
+
+                            <td>@p.CostPrice.ToString("0.00") лв.</td>
 
                             <td>
-                                <span class="fw-semibold">@p.StockQty</span>
-                                <span class="text-muted"> / low ≤ @(p.LowStockThreshold > 0 ? p.LowStockThreshold : 10)</span>
-                            </td>
-
-                            <td>
-                                @if (p.IsActive)
+                                @if (p.HasPromotion)
                                 {
-                                    <span class="badge bg-success">Active</span>
+                                    <div class="fw-bold text-danger">@p.EffectivePrice.ToString("0.00") лв.</div>
+                                    <div class="small text-muted text-decoration-line-through">@p.Price.ToString("0.00") лв.</div>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Inactive</span>
+                                    <span class="fw-bold">@p.EffectivePrice.ToString("0.00") лв.</span>
+                                }
+                            </td>
+
+                            <td>
+                                <span class="fw-bold @(p.UnitProfit >= 0 ? "text-success" : "text-danger")">
+                                    @p.UnitProfit.ToString("0.00") лв.
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="fw-bold">@p.StockQty</div>
+                                <div class="small text-muted">Праг: @p.LowStockThreshold</div>
+                            </td>
+
+                            <td>
+                                @if (!p.IsActive)
+                                {
+                                    <span class="status-badge status-badge--inactive">Неактивен</span>
+                                }
+                                else if (p.IsOutOfStock)
+                                {
+                                    <span class="status-badge status-badge--out">Изчерпан</span>
+                                }
+                                else if (p.IsLowStock)
+                                {
+                                    <span class="status-badge status-badge--low">Ниска наличност</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-badge--active">Наличен</span>
+                                }
+
+                                @if (p.HasPromotion)
+                                {
+                                    <div class="mt-2">
+                                        <span class="promo-chip">Промо -@p.DiscountPercent?.ToString("0")%</span>
+                                    </div>
                                 }
                             </td>
 
                             <td class="text-end">
-                                <div class="btn-group" role="group">
-                                    <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+                                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                    <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@p.Id">
+                                        Редакция
+                                    </a>
 
                                     <form method="post"
                                           asp-action="Delete"
                                           asp-route-id="@p.Id"
-                                          onsubmit="return confirm('Delete product: @p.Name ?');">
+                                          onsubmit="return confirm('Сигурна ли си, че искаш да изтриеш продукта: @p.Name ?');">
                                         @Html.AntiForgeryToken()
-                                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">
+                                            Изтрий
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -190,12 +322,19 @@
         {
             ["q"] = q,
             ["categoryId"] = categoryIdStr,
+            ["brandId"] = brandIdStr,
             ["stock"] = stock,
+            ["active"] = active,
             ["sort"] = sort,
             ["minQty"] = minQty,
             ["maxQty"] = maxQty,
+            ["minMl"] = minMl,
+            ["maxMl"] = maxMl,
             ["pageSize"] = pageSize
         }
     };
 }
-<partial name="_Pagination" model="pager" />
+
+<div class="mt-4">
+    <partial name="_Pagination" model="pager" />
+</div>

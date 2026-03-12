@@ -1,168 +1,237 @@
 ﻿@model Bevera.Models.ViewModel.AdminDashboardViewModel
+
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Табло";
+    ViewData["Title"] = "Админ табло";
 }
 
-<div class="kpi-grid">
+<div class="admin-hero mb-4">
+    <div class="admin-hero__content">
+        <div class="admin-hero__badge">Bevera Control Center</div>
+        <h1 class="admin-hero__title">Добре дошла в управлението на Bevera</h1>
+        <p class="admin-hero__text">
+            Следи каталога, наличностите, поръчките, доставките и финансите в един общ панел.
+        </p>
 
-    <div class="kpi-card kpi--blue">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Категории</div>
-                <div class="kpi-value">@Model.CategoriesCount</div>
-            </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/category.png" alt="Категории" />
-            </div>
+        <div class="admin-hero__actions">
+            <a asp-controller="AdminProducts" asp-action="Create" class="btn btn-warning admin-hero__btn">
+                + Нов продукт
+            </a>
+            <a asp-controller="AdminSupply" asp-action="CreatePurchaseOrder" class="btn btn-light admin-hero__btn">
+                + Нова заявка към доставчик
+            </a>
         </div>
-        <div class="kpi-footer">
-            <a class="kpi-link" asp-controller="AdminCategories" asp-action="Index">
-                <span class="eye">👁️</span> Преглед
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <div class="dashboard-section__header">
+        <h2 class="dashboard-section__title">Основни показатели</h2>
+        <div class="dashboard-section__sub">Бърз преглед на състоянието на системата</div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card card-orange">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Категории</div>
+                    <div class="dashboard-card__value">@Model.CategoriesCount</div>
+                </div>
+                <div class="dashboard-card__icon">🧾</div>
+            </div>
+            <a asp-controller="AdminCategories" asp-action="Index" class="dashboard-card__link">Преглед</a>
+        </div>
+
+        <div class="dashboard-card card-blue">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Продукти</div>
+                    <div class="dashboard-card__value">@Model.ProductsCount</div>
+                </div>
+                <div class="dashboard-card__icon">🥤</div>
+            </div>
+            <div class="small text-muted mb-2">
+                Активни: <strong>@Model.ActiveProducts</strong> · Неактивни: <strong>@Model.InactiveProducts</strong>
+            </div>
+            <a asp-controller="AdminProducts" asp-action="Index" class="dashboard-card__link">Управление</a>
+        </div>
+
+        <div class="dashboard-card card-dark">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Потребители</div>
+                    <div class="dashboard-card__value">@Model.UsersCount</div>
+                </div>
+                <div class="dashboard-card__icon">👥</div>
+            </div>
+            <a asp-controller="AdminRoles" asp-action="Index" class="dashboard-card__link">Преглед</a>
+        </div>
+
+        <div class="dashboard-card card-red">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Нови поръчки днес</div>
+                    <div class="dashboard-card__value">@Model.NewOrdersToday</div>
+                </div>
+                <div class="dashboard-card__icon">📦</div>
+            </div>
+            <a asp-controller="Orders" asp-action="Index" class="dashboard-card__link">Отвори поръчките</a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-section mt-4">
+    <div class="dashboard-section__header">
+        <h2 class="dashboard-section__title">Поръчки</h2>
+        <div class="dashboard-section__sub">Оперативно проследяване на потока</div>
+    </div>
+
+    <div class="dashboard-grid dashboard-grid--orders">
+        <div class="mini-kpi mini-kpi--gold">
+            <div class="mini-kpi__title">Чакащи</div>
+            <div class="mini-kpi__value">@Model.PendingOrders</div>
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="Submitted">Преглед</a>
+        </div>
+
+        <div class="mini-kpi mini-kpi--blue">
+            <div class="mini-kpi__title">В подготовка</div>
+            <div class="mini-kpi__value">@Model.PreparingOrders</div>
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="Preparing">Преглед</a>
+        </div>
+
+        <div class="mini-kpi mini-kpi--cyan">
+            <div class="mini-kpi__title">Доставени</div>
+            <div class="mini-kpi__value">@Model.DeliveredOrders</div>
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="Delivered">Преглед</a>
+        </div>
+
+        <div class="mini-kpi mini-kpi--green">
+            <div class="mini-kpi__title">Получени</div>
+            <div class="mini-kpi__value">@Model.ReceivedOrders</div>
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="Received">Преглед</a>
+        </div>
+
+        <div class="mini-kpi mini-kpi--dark">
+            <div class="mini-kpi__title">Платени</div>
+            <div class="mini-kpi__value">@Model.PaidOrders</div>
+            <a asp-controller="Orders" asp-action="Index" asp-route-payment="Paid">Преглед</a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-split mt-4">
+    <div class="dashboard-panel">
+        <div class="dashboard-panel__header">
+            <h3>Склад и промоции</h3>
+            <p>Следи критичните артикули и маркетинговите активности</p>
+        </div>
+
+        <div class="stats-list">
+            <a asp-controller="AdminProducts" asp-action="Index" asp-route-stock="low" class="stats-row">
+                <span>Ниска наличност</span>
+                <strong class="text-warning-emphasis">@Model.LowStockProducts</strong>
+            </a>
+
+            <a asp-controller="AdminProducts" asp-action="Index" asp-route-stock="out" class="stats-row">
+                <span>Изчерпани продукти</span>
+                <strong class="text-danger">@Model.OutOfStockProducts</strong>
+            </a>
+
+            <a asp-controller="AdminPromotions" asp-action="Index" class="stats-row">
+                <span>Активни промоции</span>
+                <strong class="text-primary">@Model.ActivePromotions</strong>
+            </a>
+
+            <a asp-controller="AdminPromotions" asp-action="Index" class="stats-row">
+                <span>Изтичат скоро</span>
+                <strong class="text-danger">@Model.EndingSoonPromotions</strong>
             </a>
         </div>
     </div>
 
-    <div class="kpi-card kpi--rose">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Продукти</div>
-                <div class="kpi-value">@Model.ProductsCount</div>
+    <div class="dashboard-panel">
+        <div class="dashboard-panel__header">
+            <h3>Финанси</h3>
+            <p>Реални фирмени показатели на база приходи и разходи</p>
+        </div>
+
+        <div class="finance-cards">
+            <div class="finance-card finance-card--income">
+                <div class="finance-card__label">Приходи</div>
+                <div class="finance-card__value">@Model.Revenue.ToString("0.00") лв.</div>
             </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/products.png" alt="Продукти" />
+
+            <div class="finance-card finance-card--expense">
+                <div class="finance-card__label">Разходи</div>
+                <div class="finance-card__value">@Model.Expenses.ToString("0.00") лв.</div>
+            </div>
+
+            <div class="finance-card finance-card--profit">
+                <div class="finance-card__label">Брутна печалба</div>
+                <div class="finance-card__value">@Model.GrossProfit.ToString("0.00") лв.</div>
+            </div>
+
+            <div class="finance-card finance-card--balance">
+                <div class="finance-card__label">Фирмен баланс</div>
+                <div class="finance-card__value">@Model.CompanyBalance.ToString("0.00") лв.</div>
             </div>
         </div>
-        <div class="kpi-footer">
-            <a class="kpi-link" asp-controller="AdminProducts" asp-action="Index">
-                <span class="eye">👁️</span> Преглед
-            </a>
+
+        <div class="mt-3">
+            <a asp-controller="AdminSupply" asp-action="Finance" class="dashboard-card__link">Отвори финансовия модул</a>
         </div>
     </div>
+</div>
 
-    <div class="kpi-card kpi--dark">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Общо поръчки</div>
-                <div class="kpi-value">@Model.OrdersCount</div>
-            </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/orders.png" alt="Поръчки" />
-            </div>
-        </div>
-        <div class="kpi-footer">
-            <a class="kpi-link" asp-controller="Orders" asp-action="Index">
-                <span class="eye">👁️</span> Преглед
-            </a>
-        </div>
+<div class="dashboard-section mt-4">
+    <div class="dashboard-section__header">
+        <h2 class="dashboard-section__title">Доставки и снабдяване</h2>
+        <div class="dashboard-section__sub">Състояние на доставчиците и заявките</div>
     </div>
 
-    <div class="kpi-card kpi--red">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Приходи</div>
-                <div class="kpi-value">@Model.Revenue.ToString("0.00") €</div>
+    <div class="dashboard-grid">
+        <div class="dashboard-card card-orange-soft">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Дистрибутори</div>
+                    <div class="dashboard-card__value">@Model.DistributorsCount</div>
+                </div>
+                <div class="dashboard-card__icon">🚚</div>
             </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/revenue.jpg" alt="Приходи" />
-            </div>
+            <a asp-controller="AdminSupply" asp-action="Distributors" class="dashboard-card__link">Управление</a>
         </div>
-        <div class="kpi-footer"></div>
-    </div>
 
-    <div class="kpi-card kpi--rose">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Чакащи</div>
-                <div class="kpi-value">@Model.PendingOrders</div>
+        <div class="dashboard-card card-blue-soft">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Чернови заявки</div>
+                    <div class="dashboard-card__value">@Model.DraftPurchaseOrders</div>
+                </div>
+                <div class="dashboard-card__icon">📝</div>
             </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/pending.png" alt="Чакащи" />
-            </div>
+            <a asp-controller="AdminSupply" asp-action="PurchaseOrders" class="dashboard-card__link">Преглед</a>
         </div>
-        <div class="kpi-footer">
-            <a class="kpi-link" asp-controller="Orders" asp-action="Index" asp-route-status="Submitted">
-                <span class="eye">👁️</span> Преглед
-            </a>
-        </div>
-    </div>
 
-    <div class="kpi-card kpi--blue">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Доставени</div>
-                <div class="kpi-value">@Model.DeliveredOrders</div>
+        <div class="dashboard-card card-cyan-soft">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Изпратени заявки</div>
+                    <div class="dashboard-card__value">@Model.SubmittedPurchaseOrders</div>
+                </div>
+                <div class="dashboard-card__icon">📨</div>
             </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/delivered.png" alt="Доставени" />
-            </div>
+            <a asp-controller="AdminSupply" asp-action="PurchaseOrders" class="dashboard-card__link">Преглед</a>
         </div>
-        <div class="kpi-footer">
-            <a class="kpi-link" asp-controller="Orders" asp-action="Index" asp-route-status="Delivered">
-                <span class="eye">👁️</span> Преглед
-            </a>
-        </div>
-    </div>
 
-    <div class="kpi-card kpi--red">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Ниска наличност</div>
-                <div class="kpi-value">@Model.LowStockProducts</div>
+        <div class="dashboard-card card-green-soft">
+            <div class="dashboard-card__top">
+                <div>
+                    <div class="dashboard-card__label">Получени доставки</div>
+                    <div class="dashboard-card__value">@Model.ReceivedPurchaseOrders</div>
+                </div>
+                <div class="dashboard-card__icon">📥</div>
             </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/lowstock.jpg" alt="Ниска наличност" />
-            </div>
-        </div>
-        <div class="kpi-footer">
-            <a class="kpi-link" asp-controller="AdminProducts" asp-action="Index" asp-route-stock="low">
-                <span class="eye">👁️</span> Преглед
-            </a>
+            <a asp-controller="AdminSupply" asp-action="PurchaseOrders" class="dashboard-card__link">Преглед</a>
         </div>
     </div>
-
-    <div class="kpi-card kpi--dark">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Потребители</div>
-                <div class="kpi-value">@Model.UsersCount</div>
-            </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/user.jpg" alt="Потребители" />
-            </div>
-        </div>
-        <div class="kpi-footer">
-            <a class="kpi-link" asp-controller="AdminRoles" asp-action="Index">
-                <span class="eye">👁️</span> Преглед
-            </a>
-        </div>
-    </div>
-
-    <div class="kpi-card kpi--red">
-        <div class="kpi-head">
-            <div>
-                <div class="kpi-label">Активни промоции</div>
-                <div class="kpi-value">@Model.ActivePromotions</div>
-            </div>
-            <div class="kpi-icon">
-                <img src="~/images/icons/revenue.jpg" alt="Промоции" />
-            </div>
-        </div>
-
-        <div class="kpi-footer d-flex flex-column align-items-start gap-2">
-            @if (Model.EndingSoonPromotions > 0)
-            {
-                <div class="small text-danger fw-semibold">@Model.EndingSoonPromotions изтичат скоро</div>
-            }
-            else
-            {
-                <div class="small text-muted">Няма изтичащи скоро</div>
-            }
-
-            <a class="kpi-link" asp-controller="AdminPromotions" asp-action="Index">
-                <span class="eye">👁️</span> Управлявай
-            </a>
-        </div>
-    </div>
-
 </div>

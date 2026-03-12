@@ -25,6 +25,10 @@ namespace Bevera.Models.Supply
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // Optional link to Identity user
+        public string? ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+
         public ICollection<DistributorProduct> DistributorProducts { get; set; } = new List<DistributorProduct>();
         public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = new List<PurchaseOrder>();
     }

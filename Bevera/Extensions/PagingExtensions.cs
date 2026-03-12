@@ -1,7 +1,5 @@
 ﻿using Bevera.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Bevera.Extensions
 {
@@ -13,9 +11,10 @@ namespace Bevera.Extensions
             if (pageSize < 1) pageSize = 10;
 
             var total = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize)
-                                   .Take(pageSize)
-                                   .ToListAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return new PagedResult<T>
             {

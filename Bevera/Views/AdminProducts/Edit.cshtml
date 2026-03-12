@@ -1,82 +1,196 @@
-﻿@model Bevera.Models.ViewModels.AdminProductFormViewModel
+﻿@model Bevera.Models.ViewModel.AdminProductFormViewModel
+
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Edit Product";
+    ViewData["Title"] = "Редакция на продукт";
 }
 
-<h1 class="mb-3">@ViewData["Title"]</h1>
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Каталог</div>
+        <h1 class="page-header-bevera__title">Редакция на продукт</h1>
+        <p class="page-header-bevera__text">
+            Обнови информацията, ценообразуването, промоцията и наличността.
+        </p>
+    </div>
 
-<form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-outline-secondary" asp-action="Index">Назад</a>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="product-form-shell">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="ExistingImagePath" />
 
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label">Name</label>
-            <input asp-for="Name" class="form-control" />
-            <span asp-validation-for="Name" class="text-danger"></span>
-        </div>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
 
-        <div class="col-md-3">
-            <label class="form-label">Price (€)</label>
-            <input asp-for="Price" class="form-control" />
-            <span asp-validation-for="Price" class="text-danger"></span>
-        </div>
+    <div class="product-form-grid">
+        <div class="product-form-main">
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Основна информация</h3>
+                    <p>Име, идентификация и принадлежност на продукта</p>
+                </div>
 
-        <div class="col-md-3">
-            <label class="form-label">Category</label>
-            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
-            <span asp-validation-for="CategoryId" class="text-danger"></span>
-        </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
 
-        <div class="col-md-3">
-            <label class="form-label">Stock Qty</label>
-            <input asp-for="StockQty" class="form-control" />
-            <span asp-validation-for="StockQty" class="text-danger"></span>
-        </div>
+                    <div class="col-md-6">
+                        <label asp-for="SKU" class="form-label"></label>
+                        <input asp-for="SKU" class="form-control" />
+                        <span asp-validation-for="SKU" class="text-danger"></span>
+                    </div>
 
-        <div class="col-md-3">
-            <label class="form-label">Low Stock Threshold</label>
-            <input asp-for="LowStockThreshold" class="form-control" />
-            <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
-        </div>
+                    <div class="col-md-6">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
 
-        <div class="col-md-3">
-            <label class="form-label">Active</label>
-            <div class="form-check">
-                <input asp-for="IsActive" class="form-check-input" />
-                <label class="form-check-label" asp-for="IsActive">Visible for clients</label>
+                    <div class="col-md-6">
+                        <label asp-for="BrandId" class="form-label"></label>
+                        <select asp-for="BrandId" asp-items="Model.Brands" class="form-select"></select>
+                        <span asp-validation-for="BrandId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Ml" class="form-label"></label>
+                        <input asp-for="Ml" class="form-control" />
+                        <span asp-validation-for="Ml" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="PackageType" class="form-label"></label>
+                        <input asp-for="PackageType" class="form-control" />
+                        <span asp-validation-for="PackageType" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Цени и промоция</h3>
+                    <p>Контрол на марж, крайна цена и период на отстъпка</p>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Price" class="form-label"></label>
+                        <input asp-for="Price" class="form-control" />
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="CostPrice" class="form-label"></label>
+                        <input asp-for="CostPrice" class="form-control" />
+                        <span asp-validation-for="CostPrice" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Печалба на брой</label>
+                        <input value="@Model.UnitProfit.ToString("0.00") лв." class="form-control" disabled />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DiscountPercent" class="form-label"></label>
+                        <input asp-for="DiscountPercent" class="form-control" />
+                        <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DiscountEndsAt" class="form-label"></label>
+                        <input asp-for="DiscountEndsAt" class="form-control" type="datetime-local"
+                               value="@(Model.DiscountEndsAt.HasValue? Model.DiscountEndsAt.Value.ToString("yyyy-MM-ddTHH:mm") : "")" />
+                        <span asp-validation-for="DiscountEndsAt" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Склад и видимост</h3>
+                    <p>Управление на наличност и клиентска видимост</p>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="StockQty" class="form-label"></label>
+                        <input asp-for="StockQty" class="form-control" />
+                        <span asp-validation-for="StockQty" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="LowStockThreshold" class="form-label"></label>
+                        <input asp-for="LowStockThreshold" class="form-control" />
+                        <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check form-switch product-switch">
+                            <input asp-for="IsActive" class="form-check-input" />
+                            <label asp-for="IsActive" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="col-md-12">
-            <label class="form-label">Description</label>
-            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-            <span asp-validation-for="Description" class="text-danger"></span>
-        </div>
+        <div class="product-form-side">
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Текущо изображение</h3>
+                    <p>Преглед и смяна на главната снимка</p>
+                </div>
 
-        <div class="col-md-6">
-            <label class="form-label">Current image</label><br />
-            @if (!string.IsNullOrWhiteSpace(Model.ExistingImagePath))
-            {
-                <img src="@Model.ExistingImagePath" style="width:120px;height:120px;object-fit:cover;border-radius:12px;" />
-            }
-            else
-            {
-                <span class="text-muted">No image</span>
-            }
-        </div>
+                @if (!string.IsNullOrWhiteSpace(Model.ExistingImagePath))
+                {
+                    <img src="@Model.ExistingImagePath" class="product-current-image mb-3" alt="Текущо изображение" />
+                }
+                else
+                {
+                    <div class="product-current-image product-current-image--empty mb-3">
+                        Няма качена снимка
+                    </div>
+                }
 
-        <div class="col-md-6">
-            <label class="form-label">Change image (optional)</label>
-            <input asp-for="ImageFile" type="file" class="form-control" />
+                <div>
+                    <label asp-for="ImageFile" class="form-label"></label>
+                    <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
+                </div>
+            </div>
+
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Бърз преглед</h3>
+                    <p>Актуалното състояние на продукта</p>
+                </div>
+
+                <ul class="product-quick-summary">
+                    <li>Продажна цена: <strong>@Model.Price.ToString("0.00") лв.</strong></li>
+                    <li>Доставна цена: <strong>@Model.CostPrice.ToString("0.00") лв.</strong></li>
+                    <li>Крайна цена: <strong>@Model.EffectivePrice.ToString("0.00") лв.</strong></li>
+                    <li>Печалба: <strong>@Model.UnitProfit.ToString("0.00") лв.</strong></li>
+                    <li>Наличност: <strong>@Model.StockQty</strong></li>
+                </ul>
+            </div>
         </div>
     </div>
 
-    <div class="mt-4 d-flex gap-2">
-        <button class="btn btn-success" type="submit">Save</button>
-        <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+    <div class="product-form-actions">
+        <button class="btn btn-warning bevera-btn-main" type="submit">Запази промените</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Отказ</a>
     </div>
 </form>
 

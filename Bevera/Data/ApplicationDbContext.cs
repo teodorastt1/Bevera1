@@ -243,6 +243,13 @@ namespace Bevera.Data
                 .WithMany()
                 .HasForeignKey(x => x.CreatedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            //distributor
+            builder.Entity<Distributor>()
+               .HasOne(d => d.ApplicationUser)
+              .WithMany()
+               .HasForeignKey(d => d.ApplicationUserId)
+             .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

@@ -2,6 +2,7 @@
 using Bevera.Extensions;
 using Bevera.Helpers;
 using Bevera.Models;
+using Bevera.Models.Finance;
 using Bevera.Models.ViewModels;
 using Bevera.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -131,11 +132,14 @@ namespace Bevera.Controllers
             var order = await _context.Orders
                 .AsNoTracking()
                 .Include(o => o.Client)
-                .Include(o => o.Items).ThenInclude(i => i.Product)
-                .Include(o => o.StatusHistory).ThenInclude(h => h.ChangedByUser)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                .Include(o => o.StatusHistory)
+                    .ThenInclude(h => h.ChangedByUser)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null) return NotFound();
+
             return View(order);
         }
 
@@ -153,6 +157,35 @@ namespace Bevera.Controllers
                 order.ChangedAt = DateTime.UtcNow;
 
                 await AddHistory(order.Id, order.Status, "Плащане: маркирано като ПЛАТЕНО (симулация).");
+
+                var userId = _userManager.GetUserId(User) ?? "";
+
+                var balance = await _context.CompanyBalances.FirstOrDefaultAsync();
+                if (balance == null)
+                {
+                    balance = new CompanyBalance
+                    {
+                        Balance = 0m,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    _context.CompanyBalances.Add(balance);
+                }
+
+                balance.Balance += order.Total;
+                balance.UpdatedAt = DateTime.UtcNow;
+
+                _context.FinanceTransactions.Add(new FinanceTransaction
+                {
+                    Type = FinanceTypes.Income,
+                    Source = FinanceSources.Order,
+                    Amount = order.Total,
+                    Description = $"Приход от поръчка #{order.Id}",
+                    CreatedAt = DateTime.UtcNow,
+                    OrderId = order.Id,
+                    CreatedByUserId = userId
+                });
+
                 await _context.SaveChangesAsync();
             }
 
@@ -177,6 +210,7 @@ namespace Bevera.Controllers
 
             await AddHistory(order.Id, OrderStates.Preparing, "Статус: подготовка/опаковане.");
             await AddClientNotification(order, "Поръчката ви е в подготовка.", $"/Client/OrderDetails/{order.Id}");
+
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
@@ -197,6 +231,7 @@ namespace Bevera.Controllers
 
             await AddHistory(order.Id, OrderStates.ReadyForPickup, "Статус: готова за взимане/изпращане.");
             await AddClientNotification(order, "Поръчката ви е готова за изпращане.", $"/Client/OrderDetails/{order.Id}");
+
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
@@ -217,6 +252,7 @@ namespace Bevera.Controllers
 
             await AddHistory(order.Id, OrderStates.Delivered, "Статус: изпратена/пристигнала.");
             await AddClientNotification(order, "Поръчката ви е изпратена.", $"/Client/OrderDetails/{order.Id}");
+
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
@@ -237,6 +273,7 @@ namespace Bevera.Controllers
 
             await AddHistory(order.Id, OrderStates.Received, "Статус: получена.");
             await AddClientNotification(order, "Поръчката е маркирана като получена.", $"/Client/OrderDetails/{order.Id}");
+
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
@@ -258,12 +295,20 @@ namespace Bevera.Controllers
                     return StatusCode(500, "Failed to generate invoice metadata.");
             }
 
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "invoices", order.InvoiceStoredFileName);
+            var path = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "uploads",
+                "invoices",
+                order.InvoiceStoredFileName);
 
             if (!System.IO.File.Exists(path))
                 return NotFound("Фактурата липсва на сървъра.");
 
-            return PhysicalFile(path, order.InvoiceContentType ?? "application/pdf", order.InvoiceFileName ?? $"Invoice_{order.Id}.pdf");
+            return PhysicalFile(
+                path,
+                order.InvoiceContentType ?? "application/pdf",
+                order.InvoiceFileName ?? $"Invoice_{order.Id}.pdf");
         }
 
         private async Task AddHistory(int orderId, string status, string? note)
