@@ -1,9 +1,10 @@
 ﻿using Bevera.Models;
 using Bevera.Models.Catalog;
+using Bevera.Models.Finance;
 using Bevera.Models.Inventory;
+using Bevera.Models.Supply;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace Bevera.Data
 {
@@ -29,69 +30,72 @@ namespace Bevera.Data
 
         public DbSet<Favorite> Favorites { get; set; } = default!;
         public DbSet<Review> Reviews { get; set; } = default!;
+        public DbSet<AppNotification> AppNotifications { get; set; }
 
+        // Supply
+        public DbSet<Distributor> Distributors { get; set; }
+        public DbSet<DistributorProduct> DistributorProducts { get; set; }
+        public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+        public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
+
+        // Finance
+        public DbSet<CompanyBalance> CompanyBalances { get; set; }
+        public DbSet<FinanceTransaction> FinanceTransactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // ✅ fix за decimal warning-ите
+            // ======================
+            // Decimal precision
+            // ======================
             builder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+            builder.Entity<Product>().Property(p => p.CostPrice).HasPrecision(18, 2);
             builder.Entity<Product>().Property(p => p.VolumeLiters).HasPrecision(18, 3);
             builder.Entity<Product>().Property(p => p.AlcoholPercent).HasPrecision(5, 2);
+            builder.Entity<Product>().Property(p => p.DiscountPercent).HasPrecision(5, 2);
 
             builder.Entity<CartItem>().Property(c => c.UnitPrice).HasPrecision(18, 2);
+
             builder.Entity<Order>().Property(o => o.Total).HasPrecision(18, 2);
             builder.Entity<OrderItem>().Property(oi => oi.UnitPrice).HasPrecision(18, 2);
             builder.Entity<OrderItem>().Property(oi => oi.LineTotal).HasPrecision(18, 2);
 
+            builder.Entity<DistributorProduct>().Property(x => x.CostPrice).HasPrecision(18, 2);
+            builder.Entity<PurchaseOrder>().Property(x => x.TotalAmount).HasPrecision(18, 2);
+            builder.Entity<PurchaseOrderItem>().Property(x => x.CostPrice).HasPrecision(18, 2);
+            builder.Entity<PurchaseOrderItem>().Property(x => x.LineTotal).HasPrecision(18, 2);
 
-            // Category (Parent) -> Subcategories (self reference)
+            builder.Entity<CompanyBalance>().Property(x => x.Balance).HasPrecision(18, 2);
+            builder.Entity<FinanceTransaction>().Property(x => x.Amount).HasPrecision(18, 2);
+
+            // ======================
+            // Category
+            // ======================
             builder.Entity<Category>()
                 .HasOne(c => c.ParentCategory)
                 .WithMany(c => c.SubCategories)
                 .HasForeignKey(c => c.ParentCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Category -> Products
-            builder.Entity<Product>()
-                .HasOne(p => p.Category)
-                .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Product>()
-      .Property(p => p.DiscountPercent)
-      .HasPrecision(5, 2);
-
-            builder.Entity<Category>()
-    .HasOne(c => c.ParentCategory)
-    .WithMany(c => c.SubCategories)
-    .HasForeignKey(c => c.ParentCategoryId)
-    .OnDelete(DeleteBehavior.Restrict); // важно: да не трие каскадно без да искаш
-
-
-            builder.Entity<Product>()
-      .HasOne(p => p.Category)
-      .WithMany(c => c.Products)
-      .HasForeignKey(p => p.CategoryId)
-      .OnDelete(DeleteBehavior.Cascade);
-
             builder.Entity<Category>()
                 .HasIndex(c => c.Name)
                 .IsUnique();
 
-            builder.Entity<Product>()
-                .Property(x => x.AlcoholPercent)
-                .HasPrecision(5, 2);
-
-
-            // ✅ relationships
+            // ======================
+            // Product
+            // ======================
             builder.Entity<Product>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Product>()
+                .HasOne(p => p.Brand)
+                .WithMany(b => b.Products)
+                .HasForeignKey(p => p.BrandId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.Entity<ProductImage>()
                 .HasOne(i => i.Product)
@@ -99,41 +103,42 @@ namespace Bevera.Data
                 .HasForeignKey(i => i.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<InventoryMovement>()
-                .HasOne(m => m.Product)
+            // ======================
+            // Cart
+            // ======================
+            builder.Entity<CartItem>()
+                .HasOne(ci => ci.User)
                 .WithMany()
-                .HasForeignKey(m => m.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Product>()
-               .Property(p => p.Price)
-               .HasPrecision(18, 2);
-
-            builder.Entity<Product>()
-                .Property(p => p.AlcoholPercent)
-                .HasPrecision(5, 2);
-
-            builder.Entity<Product>()
-                .Property(p => p.VolumeLiters)
-                .HasPrecision(10, 2);
+                .HasForeignKey(ci => ci.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<CartItem>()
-                .Property(c => c.UnitPrice)
-                .HasPrecision(18, 2);
+                .HasOne(ci => ci.Product)
+                .WithMany()
+                .HasForeignKey(ci => ci.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // ======================
+            // Orders
+            // ======================
             builder.Entity<Order>()
-                .Property(o => o.Total)
-                .HasPrecision(18, 2);
+                .HasOne(o => o.Client)
+                .WithMany()
+                .HasForeignKey(o => o.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<OrderItem>()
-                .Property(oi => oi.UnitPrice)
-                .HasPrecision(18, 2);
+                .HasOne(i => i.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(i => i.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<OrderItem>()
-                .Property(oi => oi.LineTotal)
-                .HasPrecision(18, 2);
+                .HasOne(i => i.Product)
+                .WithMany()
+                .HasForeignKey(i => i.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // ✅ RELATIONSHIPS: да няма OrderId1 shadow FK
             builder.Entity<OrderStatusHistory>()
                 .HasOne(h => h.Order)
                 .WithMany(o => o.StatusHistory)
@@ -146,184 +151,98 @@ namespace Bevera.Data
                 .HasForeignKey(h => h.ChangedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<OrderItem>()
-                .HasOne(i => i.Order)
-                .WithMany(o => o.Items)
-                .HasForeignKey(i => i.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // ✅ Favorites: 1 user + 1 product (unique)
-            builder.Entity<Favorite>()
-                .HasIndex(x => new { x.UserId, x.ProductId })
-                .IsUnique();
-
-            // ✅ Reviews: позволяваме 1 review на user за product (по желание)
-            builder.Entity<Review>()
-                .HasIndex(x => new { x.UserId, x.ProductId })
-                .IsUnique();
-
-            // ✅ Money
-            builder.Entity<Product>()
-                .Property(p => p.Price)
-                .HasPrecision(18, 2);
-
-            builder.Entity<CartItem>()
-                .Property(ci => ci.UnitPrice)
-                .HasPrecision(18, 2);
-
-            builder.Entity<OrderItem>()
-                .Property(oi => oi.UnitPrice)
-                .HasPrecision(18, 2);
-
-            builder.Entity<OrderItem>()
-                .Property(oi => oi.LineTotal)
-                .HasPrecision(18, 2);
-
-            builder.Entity<Order>()
-                .Property(o => o.Total)
-                .HasPrecision(18, 2);
-
-            // ✅ Quantity / volume / percent (ако са decimal при теб)
-            builder.Entity<Product>()
-                .Property(p => p.VolumeLiters)
-                .HasPrecision(18, 3);
-
-            builder.Entity<Product>()
-                .Property(p => p.AlcoholPercent)
-                .HasPrecision(5, 2);
-            // Category -> Products (1:N)
-            builder.Entity<Product>()
-                .HasOne(p => p.Category)
-                .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Brand -> Products (1:N) optional
-            builder.Entity<Product>()
-                .HasOne(p => p.Brand)
-                .WithMany(b => b.Products)
-                .HasForeignKey(p => p.BrandId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // Product -> Images (1:N)
-            builder.Entity<ProductImage>()
-                .HasOne(i => i.Product)
-                .WithMany(p => p.Images)
-                .HasForeignKey(i => i.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // CartItem -> User (N:1)
-            builder.Entity<CartItem>()
-                .HasOne(ci => ci.User)
-                .WithMany()
-                .HasForeignKey(ci => ci.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // CartItem -> Product (N:1)
-            builder.Entity<CartItem>()
-                .HasOne(ci => ci.Product)
-                .WithMany()
-                .HasForeignKey(ci => ci.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Order -> Client (N:1)
-            builder.Entity<Order>()
-                .HasOne(o => o.Client)
-                .WithMany()
-                .HasForeignKey(o => o.ClientId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Order -> Items (1:N)
-            builder.Entity<OrderItem>()
-                .HasOne(oi => oi.Order)
-                .WithMany(o => o.Items)
-                .HasForeignKey(oi => oi.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // OrderItem -> Product (N:1)
-            builder.Entity<OrderItem>()
-                .HasOne(oi => oi.Product)
-                .WithMany()
-                .HasForeignKey(oi => oi.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<OrderStatusHistory>()
-        .HasOne(h => h.Order)
-        .WithMany(o => o.StatusHistory)
-        .HasForeignKey(h => h.OrderId)
-        .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<OrderStatusHistory>()
-                .HasOne(h => h.ChangedByUser)
-                .WithMany()
-                .HasForeignKey(h => h.ChangedByUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // History -> ChangedByUser (N:1)
-            builder.Entity<OrderStatusHistory>()
-                .HasOne(h => h.ChangedByUser)
-                .WithMany()
-                .HasForeignKey(h => h.ChangedByUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // InventoryMovement -> Product (N:1)
+            // ======================
+            // Inventory
+            // ======================
             builder.Entity<InventoryMovement>()
                 .HasOne(m => m.Product)
                 .WithMany()
                 .HasForeignKey(m => m.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // InventoryMovement -> CreatedByUser (N:1)
             builder.Entity<InventoryMovement>()
                 .HasOne(m => m.CreatedByUser)
                 .WithMany()
                 .HasForeignKey(m => m.CreatedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // InventoryMovement -> Order (optional) (N:1)
             builder.Entity<InventoryMovement>()
                 .HasOne(m => m.Order)
                 .WithMany()
                 .HasForeignKey(m => m.OrderId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            
+            // ======================
+            // Favorites / Reviews
+            // ======================
+            builder.Entity<Favorite>()
+                .HasIndex(x => new { x.UserId, x.ProductId })
+                .IsUnique();
 
-            // ==============================
-            // Decimal precision (важно за SQL Server)
-            // ==============================
+            builder.Entity<Review>()
+                .HasIndex(x => new { x.UserId, x.ProductId })
+                .IsUnique();
 
-            // Money
-            builder.Entity<Product>()
-                .Property(p => p.Price)
-                .HasPrecision(18, 2);
+            // ======================
+            // DistributorProduct
+            // ======================
+            builder.Entity<DistributorProduct>()
+                .HasIndex(x => new { x.DistributorId, x.ProductId })
+                .IsUnique();
 
-            builder.Entity<CartItem>()
-                .Property(ci => ci.UnitPrice)
-                .HasPrecision(18, 2);
+            builder.Entity<DistributorProduct>()
+                .HasOne(x => x.Distributor)
+                .WithMany(d => d.DistributorProducts)
+                .HasForeignKey(x => x.DistributorId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<Order>()
-                .Property(o => o.Total)
-                .HasPrecision(18, 2);
+            builder.Entity<DistributorProduct>()
+                .HasOne(x => x.Product)
+                .WithMany()
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<OrderItem>()
-                .Property(oi => oi.UnitPrice)
-                .HasPrecision(18, 2);
+            // ======================
+            // PurchaseOrders
+            // ======================
+            builder.Entity<PurchaseOrder>()
+                .HasOne(po => po.Distributor)
+                .WithMany(d => d.PurchaseOrders)
+                .HasForeignKey(po => po.DistributorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<OrderItem>()
-                .Property(oi => oi.LineTotal)
-                .HasPrecision(18, 2);
+            builder.Entity<PurchaseOrder>()
+                .HasOne(po => po.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(po => po.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Alcohol % (пример: 4.50, 12.00)
-            builder.Entity<Product>()
-                .Property(p => p.AlcoholPercent)
-                .HasPrecision(5, 2);
+            builder.Entity<PurchaseOrder>()
+                .HasOne(po => po.ReceivedByUser)
+                .WithMany()
+                .HasForeignKey(po => po.ReceivedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Volume liters (пример: 0.250, 1.500)
-            builder.Entity<Product>()
-                .Property(p => p.VolumeLiters)
-                .HasPrecision(6, 3);
+            builder.Entity<PurchaseOrderItem>()
+                .HasOne(i => i.PurchaseOrder)
+                .WithMany(po => po.Items)
+                .HasForeignKey(i => i.PurchaseOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<PurchaseOrderItem>()
+                .HasOne(i => i.Product)
+                .WithMany()
+                .HasForeignKey(i => i.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ======================
+            // Finance
+            // ======================
+            builder.Entity<FinanceTransaction>()
+                .HasOne(x => x.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

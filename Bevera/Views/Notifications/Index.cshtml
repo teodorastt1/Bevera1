@@ -1,0 +1,46 @@
+﻿@model List<Bevera.Models.AppNotification>
+
+@{
+    ViewData["Title"] = "Нотификации";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" style="font-family:'Playfair Display',serif;">Нотификации</h2>
+
+        <form asp-controller="Notifications" asp-action="MarkAllAsRead" method="post">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-outline-secondary btn-sm">Маркирай всички като прочетени</button>
+        </form>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="text-muted">Все още нямаш нотификации.</div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm rounded-4 overflow-hidden">
+            @foreach (var n in Model)
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-semibold @(n.IsRead ? "text-muted" : "")">@n.Message</div>
+                        <div class="small text-muted">
+                            @n.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+
+                    @if (!n.IsRead)
+                    {
+                        <form asp-controller="Notifications" asp-action="MarkAsRead" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@n.Id" />
+                            <button class="btn btn-sm btn-primary">Прочетено</button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

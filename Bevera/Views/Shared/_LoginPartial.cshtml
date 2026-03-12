@@ -10,9 +10,9 @@
     {
         var userId = UserManager.GetUserId(User);
 
-        // ✅ Minimal DB reads: user + favorites count
         var u = Db.Users.FirstOrDefault(x => x.Id == userId);
         var favCount = Db.Favorites.Count(x => x.UserId == userId);
+        var unreadCount = Db.AppNotifications.Count(x => x.UserId == userId && !x.IsRead);
 
         string hello;
         if (User.IsInRole("Admin"))
@@ -29,12 +29,27 @@
             hello = "Здравей, " + name;
         }
 
-        <!-- ✅ Greeting FIRST -->
+        <!-- Greeting -->
         <li class="nav-item d-none d-lg-inline">
             <span class="nav-link"
                   style="text-transform:none; letter-spacing:0; color:rgba(255,255,255,.92)!important; font-weight:700;">
                 @hello
             </span>
+        </li>
+
+        <!-- 🔔 Notifications -->
+        <li class="nav-item">
+            <a class="nav-link position-relative" asp-controller="Notifications" asp-action="Index" title="Нотификации">
+                <i class="bi bi-bell"></i>
+
+                @if (unreadCount > 0)
+                {
+                    <span class="cart-badge"
+                          style="right:-12px; top:-6px; background:#f5b301; color:#111; box-shadow:0 8px 18px rgba(245,179,1,.25)">
+                        @unreadCount
+                    </span>
+                }
+            </a>
         </li>
 
         <!-- Cart -->
@@ -76,7 +91,7 @@
     }
     else
     {
-        <!-- When NOT logged in: keep cart first -->
+        <!-- Cart -->
         <li class="nav-item">
             <a class="nav-link position-relative" asp-controller="Cart" asp-action="Index" title="Количка">
                 <i id="cartIcon" class="bi bi-cart3"></i>
@@ -87,6 +102,7 @@
         <li class="nav-item">
             <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Вход</a>
         </li>
+
         <li class="nav-item">
             <a class="nav-link bevera-login-btn" asp-area="Identity" asp-page="/Account/Register">Регистрация</a>
         </li>

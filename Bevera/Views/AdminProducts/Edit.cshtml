@@ -25,18 +25,6 @@
         </div>
 
         <div class="col-md-3">
-            <label class="form-label">Discount % (optional)</label>
-            <input asp-for="DiscountPercent" class="form-control" />
-            <span asp-validation-for="DiscountPercent" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-3">
-            <label class="form-label">Discount ends (optional)</label>
-            <input asp-for="DiscountEndsAt" class="form-control" type="datetime-local" />
-            <span asp-validation-for="DiscountEndsAt" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-3">
             <label class="form-label">Category</label>
             <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
             <span asp-validation-for="CategoryId" class="text-danger"></span>
@@ -45,11 +33,13 @@
         <div class="col-md-3">
             <label class="form-label">Stock Qty</label>
             <input asp-for="StockQty" class="form-control" />
+            <span asp-validation-for="StockQty" class="text-danger"></span>
         </div>
 
         <div class="col-md-3">
             <label class="form-label">Low Stock Threshold</label>
             <input asp-for="LowStockThreshold" class="form-control" />
+            <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
         </div>
 
         <div class="col-md-3">
@@ -63,6 +53,7 @@
         <div class="col-md-12">
             <label class="form-label">Description</label>
             <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
         </div>
 
         <div class="col-md-6">

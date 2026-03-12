@@ -138,4 +138,31 @@
         </div>
     </div>
 
+    <div class="kpi-card kpi--red">
+        <div class="kpi-head">
+            <div>
+                <div class="kpi-label">Активни промоции</div>
+                <div class="kpi-value">@Model.ActivePromotions</div>
+            </div>
+            <div class="kpi-icon">
+                <img src="~/images/icons/revenue.jpg" alt="Промоции" />
+            </div>
+        </div>
+
+        <div class="kpi-footer d-flex flex-column align-items-start gap-2">
+            @if (Model.EndingSoonPromotions > 0)
+            {
+                <div class="small text-danger fw-semibold">@Model.EndingSoonPromotions изтичат скоро</div>
+            }
+            else
+            {
+                <div class="small text-muted">Няма изтичащи скоро</div>
+            }
+
+            <a class="kpi-link" asp-controller="AdminPromotions" asp-action="Index">
+                <span class="eye">👁️</span> Управлявай
+            </a>
+        </div>
+    </div>
+
 </div>

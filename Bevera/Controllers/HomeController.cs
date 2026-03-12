@@ -65,11 +65,27 @@ namespace Bevera.Controllers
                 .Include(p => p.Images)
                 .Take(10)
                 .ToListAsync();
+            var now = DateTime.UtcNow;
+
+            var promoProducts = await _db.Products
+                .AsNoTracking()
+                .Where(p => p.IsActive
+                    && p.StockQty > 0
+                    && p.DiscountPercent.HasValue
+                    && p.DiscountPercent.Value > 0
+                    && (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= now))
+                .OrderBy(p => p.DiscountEndsAt.HasValue ? 0 : 1)
+                .ThenBy(p => p.DiscountEndsAt)
+                .ThenByDescending(p => p.Id)
+                .Include(p => p.Images)
+                .Take(10)
+                .ToListAsync();
 
             var vm = new HomeIndexVm
             {
                 BestSellers = bestOrdered.Select(p => HomeProductCardVm.From(p!, isHit: true)).ToList(),
-                Newest = newest.Select(p => HomeProductCardVm.From(p, isHit: false)).ToList()
+                Newest = newest.Select(p => HomeProductCardVm.From(p, isHit: false)).ToList(),
+                Promotions = promoProducts.Select(p => HomeProductCardVm.From(p, isHit: false)).ToList()
             };
 
             return View(vm);

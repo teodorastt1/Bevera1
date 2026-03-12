@@ -4,6 +4,7 @@ using Bevera.Models;
 using Bevera.Models.Catalog;
 using Bevera.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -13,11 +14,13 @@ namespace Bevera.Controllers
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
         private const string CartKey = "CART";
 
-        public CartController(ApplicationDbContext db)
+        public CartController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         private Dictionary<int, int> GetCart()
@@ -54,7 +57,7 @@ namespace Bevera.Controllers
             }).OrderBy(i => i.Name).ToList();
 
             ViewBag.GrandTotal = items.Sum(i => i.Total);
-            return View(items); // Views/Cart/Index.cshtml
+            return View(items);
         }
 
         [HttpPost]
@@ -63,7 +66,10 @@ namespace Bevera.Controllers
         {
             if (qty < 1) qty = 1;
 
-            var product = await _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+            var product = await _db.Products
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+
             if (product == null)
             {
                 TempData["FlashMessage"] = "Продуктът не е намерен.";
@@ -71,12 +77,15 @@ namespace Bevera.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            var available = product.Quantity > 0 ? product.Quantity : product.StockQty;
+            var available = product.StockQty;
+
             if (available <= 0)
             {
-                TempData["FlashMessage"] = $"{product.Name} в момента не е наличен.";
+                TempData["FlashMessage"] = $"{product.Name} няма наличност. Очаквайте ново зареждане.";
                 TempData["FlashType"] = "danger";
-                return !string.IsNullOrWhiteSpace(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Index));
+                return !string.IsNullOrWhiteSpace(returnUrl)
+                    ? LocalRedirect(returnUrl)
+                    : RedirectToAction(nameof(Index));
             }
 
             var cart = GetCart();
@@ -86,15 +95,13 @@ namespace Bevera.Controllers
             if (desired > available)
             {
                 desired = available;
-                TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Налично: {available}.";
-                TempData["FlashType"] = "danger";
+                TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Остават {available} бр.";
+                TempData["FlashType"] = "warning";
             }
 
             cart[productId] = desired;
-
             SaveCart(cart);
 
-            // used by navbar badge animation
             TempData["CartPulse"] = 1;
 
             if (!string.IsNullOrWhiteSpace(returnUrl))
@@ -110,10 +117,15 @@ namespace Bevera.Controllers
             var cart = GetCart();
 
             if (qty <= 0)
+            {
                 cart.Remove(productId);
+            }
             else
             {
-                var product = await _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+                var product = await _db.Products
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+
                 if (product == null)
                 {
                     cart.Remove(productId);
@@ -122,7 +134,8 @@ namespace Bevera.Controllers
                 }
                 else
                 {
-                    var available = product.Quantity > 0 ? product.Quantity : product.StockQty;
+                    var available = product.StockQty;
+
                     if (available <= 0)
                     {
                         cart.Remove(productId);
@@ -134,8 +147,8 @@ namespace Bevera.Controllers
                         if (qty > available)
                         {
                             qty = available;
-                            TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Налично: {available}.";
-                            TempData["FlashType"] = "danger";
+                            TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Остават {available} бр.";
+                            TempData["FlashType"] = "warning";
                         }
 
                         cart[productId] = qty;
@@ -159,9 +172,8 @@ namespace Bevera.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> Count()
+        public IActionResult Count()
         {
-            // Cart is session-based in this project.
             var cart = GetCart();
             var count = cart.Values.Sum();
             return Json(new { count });
@@ -212,17 +224,16 @@ namespace Bevera.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Challenge();
 
-            // reload products from DB
             var ids = cart.Keys.ToList();
             var products = await _db.Products
                 .Where(p => ids.Contains(p.Id) && p.IsActive)
                 .ToListAsync();
 
-            // validate stock
             foreach (var p in products)
             {
                 var qty = cart[p.Id];
-                var available = p.Quantity > 0 ? p.Quantity : p.StockQty;
+                var available = p.StockQty;
+
                 if (available < qty)
                 {
                     ModelState.AddModelError("", $"Няма достатъчно наличност за: {p.Name}. Налично: {available}");
@@ -238,13 +249,13 @@ namespace Bevera.Controllers
                     UnitPrice = p.EffectivePrice,
                     Quantity = cart[p.Id]
                 }).ToList();
+
                 vm.Total = vm.Items.Sum(i => i.Total);
                 return View(vm);
             }
 
             var isCard = vm.PaymentMethod == "card";
 
-            // Extra safety: if cash, ignore any card fields
             if (!isCard)
             {
                 vm.CardHolder = null;
@@ -286,8 +297,12 @@ namespace Bevera.Controllers
                     LineTotal = p.EffectivePrice * qty
                 });
 
-                if (p.Quantity > 0) p.Quantity -= qty;
-                if (p.StockQty > 0) p.StockQty -= qty;
+                p.StockQty -= qty;
+                if (p.StockQty < 0)
+                    p.StockQty = 0;
+
+                // legacy sync
+                p.Quantity = p.StockQty;
 
                 _db.InventoryMovements.Add(new Bevera.Models.Inventory.InventoryMovement
                 {
@@ -308,6 +323,80 @@ namespace Bevera.Controllers
                 Note = isCard ? "Плащане: карта (симулация, прието)." : "Плащане: наложен платеж (очаква се).",
                 ChangedAt = DateTime.UtcNow,
                 ChangedByUserId = userId
+            });
+
+            await _db.SaveChangesAsync();
+
+            // =========================
+            // NOTIFICATIONS
+            // =========================
+
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var workers = await _userManager.GetUsersInRoleAsync("Worker");
+
+            foreach (var admin in admins)
+            {
+                _db.AppNotifications.Add(new AppNotification
+                {
+                    UserId = admin.Id,
+                    Message = $"Нова поръчка №{order.Id} беше направена.",
+                    Type = "Order",
+                    Url = $"/Orders/Details/{order.Id}",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            foreach (var worker in workers)
+            {
+                _db.AppNotifications.Add(new AppNotification
+                {
+                    UserId = worker.Id,
+                    Message = $"Има нова поръчка №{order.Id} за обработка.",
+                    Type = "Order",
+                    Url = $"/Orders/Details/{order.Id}",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            foreach (var p in products)
+            {
+                var currentAvailable = p.StockQty;
+
+                if (currentAvailable > 0 && currentAvailable < 10)
+                {
+                    foreach (var admin in admins)
+                    {
+                        _db.AppNotifications.Add(new AppNotification
+                        {
+                            UserId = admin.Id,
+                            Message = $"Ниска наличност: {p.Name} (оставащи: {currentAvailable}).",
+                            Type = "LowStock",
+                            Url = "/AdminProducts/Index",
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    foreach (var worker in workers)
+                    {
+                        _db.AppNotifications.Add(new AppNotification
+                        {
+                            UserId = worker.Id,
+                            Message = $"Ниска наличност: {p.Name} (оставащи: {currentAvailable}).",
+                            Type = "LowStock",
+                            Url = "/Worker/LowStock",
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
+            _db.AppNotifications.Add(new AppNotification
+            {
+                UserId = userId,
+                Message = $"Поръчката ви №{order.Id} беше приета успешно.",
+                Type = "Order",
+                Url = "/Client/Profile",
+                CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();

@@ -13,9 +13,6 @@ namespace Bevera.Controllers
     {
         private readonly ApplicationDbContext _db;
 
-        // Order/Payment are stored as string in the database.
-        // Keep them consistent via shared constants.
-
         public AdminController(ApplicationDbContext db)
         {
             _db = db;
@@ -32,20 +29,32 @@ namespace Bevera.Controllers
             var pendingOrders = await _db.Orders.CountAsync(o => o.Status == OrderStates.Submitted);
             var deliveredOrders = await _db.Orders.CountAsync(o => o.Status == OrderStates.Delivered);
 
-            // 3) Revenue (общо приходи от всички НЕотказани поръчки)
-            // В симулацията имаме cash поръчки, които могат да са Unpaid докато не се получат/маркират.
-            // За "общо изкарано" е по-логично да сумираме всички поръчки без Cancelled.
+            // 3) Revenue
             var revenue = await _db.Orders
                 .Where(o => o.Status != OrderStates.Cancelled)
                 .SumAsync(o => (decimal?)o.Total) ?? 0m;
 
             // 4) Stock indicators
-            // Използваме реалната наличност (Quantity ако го ползваш, иначе StockQty)
-            // и LowStockThreshold (по подразбиране 10 ако е 0).
             var lowStockProducts = await _db.Products
-            .CountAsync(p => p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10));
-            // 5) Users count (всички)
+                .CountAsync(p => p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10));
+
+            // 5) Users count
             var usersCount = await _db.Users.CountAsync();
+
+            // 6) Promotions
+            var now = DateTime.UtcNow;
+
+            var activePromotions = await _db.Products.CountAsync(p =>
+                p.DiscountPercent.HasValue &&
+                p.DiscountPercent.Value > 0 &&
+                (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= now));
+
+            var endingSoonPromotions = await _db.Products.CountAsync(p =>
+                p.DiscountPercent.HasValue &&
+                p.DiscountPercent.Value > 0 &&
+                p.DiscountEndsAt.HasValue &&
+                p.DiscountEndsAt.Value >= now &&
+                p.DiscountEndsAt.Value <= now.AddDays(2));
 
             var model = new AdminDashboardViewModel
             {
@@ -57,7 +66,8 @@ namespace Bevera.Controllers
                 UsersCount = usersCount,
                 Revenue = revenue,
                 LowStockProducts = lowStockProducts,
-
+                ActivePromotions = activePromotions,
+                EndingSoonPromotions = endingSoonPromotions
             };
 
             return View(model);

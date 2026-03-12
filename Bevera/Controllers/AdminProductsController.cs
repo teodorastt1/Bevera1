@@ -28,7 +28,7 @@ namespace Bevera.Controllers
             ViewBag.Stock = stock;
             ViewBag.PageSize = pageSize;
 
-            // ✅ само subcategories за филтъра + показваме Parent → Sub
+            // само subcategories за филтъра + показваме Parent → Sub
             var categories = await _context.Categories
                 .AsNoTracking()
                 .Include(c => c.ParentCategory)
@@ -42,6 +42,7 @@ namespace Bevera.Controllers
 
             var query = _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Images)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -55,7 +56,6 @@ namespace Bevera.Controllers
                 query = query.Where(p =>
                     p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10));
 
-            // ✅ out of stock ако решиш да го ползваш
             if (!string.IsNullOrWhiteSpace(stock) && stock == "out")
                 query = query.Where(p => p.StockQty <= 0);
 
@@ -65,21 +65,14 @@ namespace Bevera.Controllers
             if (maxQty.HasValue)
                 query = query.Where(p => p.StockQty <= maxQty.Value);
 
-
-
-            // sort
             query = sort switch
             {
                 "name_asc" => query.OrderBy(p => p.Name),
                 "name_desc" => query.OrderByDescending(p => p.Name),
-
                 "stock_asc" => query.OrderBy(p => p.StockQty).ThenBy(p => p.Name),
                 "stock_desc" => query.OrderByDescending(p => p.StockQty).ThenBy(p => p.Name),
-
                 _ => query.OrderByDescending(p => p.Id)
             };
-
-
 
             var total = await query.CountAsync();
 
@@ -95,7 +88,10 @@ namespace Bevera.Controllers
                     StockQty = p.StockQty,
                     LowStockThreshold = p.LowStockThreshold,
                     IsActive = p.IsActive,
-                    ImagePath = p.Images.OrderByDescending(i => i.IsMain).Select(i => i.ImagePath).FirstOrDefault()
+                    ImagePath = p.Images
+                        .OrderByDescending(i => i.IsMain)
+                        .Select(i => i.ImagePath)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -111,7 +107,6 @@ namespace Bevera.Controllers
             ViewBag.MinQty = minQty?.ToString() ?? "";
             ViewBag.MaxQty = maxQty?.ToString() ?? "";
 
-
             return View(model);
         }
 
@@ -122,6 +117,7 @@ namespace Bevera.Controllers
             {
                 Categories = await SubCategoriesDropDown()
             };
+
             return View(vm);
         }
 
@@ -130,7 +126,6 @@ namespace Bevera.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AdminProductFormViewModel vm)
         {
-            // ✅ защита: CategoryId трябва да е subcategory
             if (!await IsSubCategory(vm.CategoryId))
                 ModelState.AddModelError(nameof(vm.CategoryId), "Продукт може да бъде добавен само към подкатегория.");
 
@@ -145,8 +140,6 @@ namespace Bevera.Controllers
                 Name = vm.Name.Trim(),
                 Description = vm.Description?.Trim(),
                 Price = vm.Price,
-                DiscountPercent = vm.DiscountPercent,
-                DiscountEndsAt = vm.DiscountEndsAt,
                 CategoryId = vm.CategoryId,
                 StockQty = vm.StockQty,
                 LowStockThreshold = vm.LowStockThreshold,
@@ -172,6 +165,9 @@ namespace Bevera.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            TempData["ToastMessage"] = "Продуктът е добавен успешно.";
+            TempData["ToastType"] = "success";
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -190,20 +186,19 @@ namespace Bevera.Controllers
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                DiscountPercent = product.DiscountPercent,
-                DiscountEndsAt = product.DiscountEndsAt,
                 CategoryId = product.CategoryId,
                 StockQty = product.StockQty,
                 LowStockThreshold = product.LowStockThreshold,
                 IsActive = product.IsActive,
-                ExistingImagePath = product.Images.OrderByDescending(i => i.IsMain).Select(i => i.ImagePath).FirstOrDefault(),
+                ExistingImagePath = product.Images
+                    .OrderByDescending(i => i.IsMain)
+                    .Select(i => i.ImagePath)
+                    .FirstOrDefault(),
                 Categories = await SubCategoriesDropDown()
             };
 
             return View(vm);
         }
-
-
 
         // POST: /AdminProducts/Edit/5
         [HttpPost]
@@ -228,8 +223,6 @@ namespace Bevera.Controllers
             product.Name = vm.Name.Trim();
             product.Description = vm.Description?.Trim();
             product.Price = vm.Price;
-            product.DiscountPercent = vm.DiscountPercent;
-            product.DiscountEndsAt = vm.DiscountEndsAt;
             product.CategoryId = vm.CategoryId;
             product.StockQty = vm.StockQty;
             product.LowStockThreshold = vm.LowStockThreshold;
@@ -257,6 +250,10 @@ namespace Bevera.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            TempData["ToastMessage"] = "Продуктът е редактиран успешно.";
+            TempData["ToastType"] = "success";
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -277,10 +274,12 @@ namespace Bevera.Controllers
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
+            TempData["ToastMessage"] = "Продуктът е изтрит успешно.";
+            TempData["ToastType"] = "success";
+
             return RedirectToAction(nameof(Index));
         }
 
-        // ✅ dropdown само за подкатегории
         private async Task<List<SelectListItem>> SubCategoriesDropDown()
         {
             var subs = await _context.Categories
@@ -292,13 +291,11 @@ namespace Bevera.Controllers
                 .Select(c => new SelectListItem($"{c.ParentCategory!.Name} → {c.Name}", c.Id.ToString()))
                 .ToListAsync();
 
-            // placeholder
             subs.Insert(0, new SelectListItem { Value = "", Text = "— Избери подкатегория —" });
 
             return subs;
         }
 
-        // ✅ истинска проверка: дали избраната категория е subcategory
         private async Task<bool> IsSubCategory(int categoryId)
         {
             return await _context.Categories
@@ -316,7 +313,9 @@ namespace Bevera.Controllers
             var path = Path.Combine(folder, name);
 
             using (var stream = new FileStream(path, FileMode.Create))
+            {
                 await file.CopyToAsync(stream);
+            }
 
             return $"/images/products/{name}";
         }

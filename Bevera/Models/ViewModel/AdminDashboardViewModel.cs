@@ -13,5 +13,7 @@
 
         // ✅ ново
         public int UsersCount { get; set; }
+        public int ActivePromotions { get; set; }
+        public int EndingSoonPromotions { get; set; }
     }
 }

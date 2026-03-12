@@ -9,6 +9,9 @@
     var adminId = UserManager.GetUserId(User);
     var adminUser = !string.IsNullOrEmpty(adminId) ? Db.Users.FirstOrDefault(x => x.Id == adminId) : null;
     var adminLabel = adminUser?.Email ?? (User.Identity?.Name ?? "Админ");
+    var adminUnreadCount = !string.IsNullOrEmpty(adminId)
+        ? Db.AppNotifications.Count(x => x.UserId == adminId && !x.IsRead)
+        : 0;
 }
 
 <!DOCTYPE html>
@@ -19,6 +22,7 @@
     <title>@ViewData["Title"] - Bevera Админ</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 </head>
 
@@ -51,6 +55,12 @@
                 <a asp-controller="AdminRoles" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminRoles" ? "active" : "")">
                     <span>👤</span> Роли / Потребители
                 </a>
+                <div class="mt-3 mb-2" style="opacity:.7;font-size:12px;">Промоции</div>
+                <a asp-controller="AdminPromotions" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminPromotions" ? "active" : "")">
+                    <span>🔥</span> Промоции
+                </a>
+
+
             </nav>
         </aside>
 
@@ -63,6 +73,18 @@
                         <div class="small text-muted" style="font-weight:700;">Здравей, Админ</div>
                         <div style="font-weight:700;">@adminLabel</div>
                     </div>
+
+                    <a asp-controller="Notifications" asp-action="Index"
+                           class="position-relative text-dark text-decoration-none"
+                           title="Нотификации">
+                        <i class="bi bi-bell" style="font-size:1.2rem;"></i>
+                        @if (adminUnreadCount > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                @adminUnreadCount
+                            </span>
+                        }
+                    </a>
 
                     <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="d-inline">
                         <button class="btn btn-sm btn-outline-secondary" type="submit">Изход</button>

@@ -22,5 +22,10 @@ namespace Bevera.Models
         public string? Comment { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // ✅ нови полета
+        public bool IsApproved { get; set; } = false;
+        public DateTime? ApprovedAt { get; set; }
     }
 }
+

@@ -1,43 +1,66 @@
-﻿@model List<Bevera.Models.Catalog.Category>
+﻿@model IEnumerable<Bevera.Models.Catalog.Category>
 
 @{
-    var mains = Model.Where(c => c.ParentCategoryId == null).ToList();
-    var subs = Model.Where(c => c.ParentCategoryId != null).ToList();
+    var categories = Model?.ToList() ?? new List<Bevera.Models.Catalog.Category>();
+
+    var roots = categories
+        .Where(c => c.ParentCategoryId == null)
+        .OrderBy(c => c.Name)
+        .ToList();
 }
 
-<div class="mega-menu" id="megaMenu">
-    <div class="mega-top">
-        <div class="mega-title">Категории</div>
-        <button type="button" class="mega-close" aria-label="Затвори">&times;</button>
+<div class="bevera-mega-menu" id="megaMenu">
+    <div class="mega-menu-head">
+        <div>
+            <div class="mega-menu-title">Категории</div>
+            <div class="mega-menu-subtitle">Разгледай продуктите по групи</div>
+        </div>
+
+        <button type="button" class="mega-close-btn" id="megaCloseBtn" aria-label="Затвори">
+            <i class="bi bi-x-lg"></i>
+        </button>
     </div>
 
-    <div class="mega-content">
-
-        @foreach (var main in mains)
+    <div class="mega-menu-grid">
+        @foreach (var root in roots)
         {
-            var children = subs.Where(s => s.ParentCategoryId == main.Id).ToList();
+            var children = categories
+                .Where(c => c.ParentCategoryId == root.Id)
+                .OrderBy(c => c.Name)
+                .ToList();
 
-            <div class="mega-column">
-                <h6>
-                    <a asp-controller="Client"
-                           asp-action="Category"
-                           asp-route-id="@main.Id">
-                        @main.Name
-                    </a>
-                </h6>
+            <div class="mega-category-card">
+                <a class="mega-root-link"
+                       asp-controller="Client"
+                       asp-action="Category"
+                       asp-route-id="@root.Id">
+                    @root.Name
+                </a>
 
-                @foreach (var child in children)
-                {
-                    <div>
-                        <a asp-controller="Client"
+                <div class="mega-sub-list">
+                    @if (children.Any())
+                    {
+                        @foreach (var child in children)
+                        {
+                            <a class="mega-sub-link"
+                                   asp-controller="Client"
+                                   asp-action="Category"
+                                   asp-route-id="@child.Id">
+                                @child.Name
+                            </a>
+                        }
+                    }
+                    else
+                    {
+                        <a class="mega-sub-link"
+                               asp-controller="Client"
                                asp-action="Category"
-                               asp-route-id="@child.Id">
-                            @child.Name
+                               asp-route-id="@root.Id">
+                            Виж всички
                         </a>
-                    </div>
-                }
+                    }
+                </div>
             </div>
         }
-
     </div>
 </div>

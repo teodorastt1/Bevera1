@@ -9,6 +9,9 @@
     var workerId = UserManager.GetUserId(User);
     var workerUser = !string.IsNullOrEmpty(workerId) ? Db.Users.FirstOrDefault(x => x.Id == workerId) : null;
     var workerLabel = workerUser?.Email ?? (User.Identity?.Name ?? "Работник");
+    var workerUnreadCount = !string.IsNullOrEmpty(workerId)
+        ? Db.AppNotifications.Count(x => x.UserId == workerId && !x.IsRead)
+        : 0;
 }
 
 <!DOCTYPE html>
@@ -52,7 +55,7 @@
             border-bottom: 1px solid rgba(0,0,0,.06);
         }
         .wk-title { font-weight: 900; color: #1f2a37; }
-        .wk-user { display:flex; gap:10px; align-items:center; color:#333; font-weight:700; }
+        .wk-user { display:flex; gap:12px; align-items:center; color:#333; font-weight:700; }
         .wk-hello { color: rgba(0,0,0,.55); font-weight:700; font-size: 13px; }
     </style>
 </head>
@@ -93,10 +96,24 @@
         <main class="wk-main">
             <div class="wk-top">
                 <div class="wk-title">@ViewData["Title"]</div>
+
                 <div class="wk-user">
                     <div class="text-end">
                         <div class="wk-hello">Здравей, @workerLabel</div>
                     </div>
+
+                    <a asp-controller="Notifications" asp-action="Index"
+                       class="position-relative text-dark text-decoration-none"
+                       title="Нотификации">
+                        <i class="bi bi-bell" style="font-size:1.2rem;"></i>
+                        @if (workerUnreadCount > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                @workerUnreadCount
+                            </span>
+                        }
+                    </a>
+
                     <i class="bi bi-person-circle" style="font-size:1.35rem;"></i>
                 </div>
             </div>

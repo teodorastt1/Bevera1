@@ -9,10 +9,10 @@ namespace Bevera.Models.Catalog
         public int Id { get; set; }
 
         [Required, StringLength(140)]
-        public string Name { get; set; } = ""; // "Coca-Cola"
+        public string Name { get; set; } = "";
 
         [StringLength(80)]
-        public string? SKU { get; set; } // по желание
+        public string? SKU { get; set; }
 
         [StringLength(500)]
         public string? Description { get; set; }
@@ -20,35 +20,38 @@ namespace Bevera.Models.Catalog
         [Range(0, 999999)]
         public decimal Price { get; set; }
 
-        // ✅ Promotions / discounts (requires migration)
-        // Ако DiscountPercent има стойност и (ако има) DiscountEndsAt не е изтекло,
-        // продуктът се продава на намалена цена.
+        // НОВО: доставна цена (колко фирмата го купува)
+        [Range(0, 999999)]
+        public decimal CostPrice { get; set; }
+
+        // НОВО: мл за филтър и показване
+        [Range(0, 100000)]
+        public int? Ml { get; set; }
+
         [Range(0, 90)]
         public decimal? DiscountPercent { get; set; }
 
         public DateTime? DiscountEndsAt { get; set; }
 
-        // drink-specific
         [Range(0, 10)]
-        public decimal VolumeLiters { get; set; } // 0.5, 1.5...
+        public decimal VolumeLiters { get; set; }
+
         [Range(0, 999999)]
         public int StockQty { get; set; }
 
-        // под това число => “LOW STOCK”
         [Range(0, 999999)]
         public int LowStockThreshold { get; set; } = 5;
 
         [Range(0, 100)]
-        public decimal AlcoholPercent { get; set; } // 0 за безалкохолно
+        public decimal AlcoholPercent { get; set; }
 
         [StringLength(40)]
-        public string? PackageType { get; set; } // "Bottle", "Can"
+        public string? PackageType { get; set; }
 
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // relations
         public int CategoryId { get; set; }
         public Category Category { get; set; } = null!;
 
@@ -60,7 +63,8 @@ namespace Bevera.Models.Catalog
         public int Quantity { get; set; }
         public int MinQuantity { get; set; }
 
-        // Not mapped helper
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+
         [NotMapped]
         public decimal EffectivePrice
         {
@@ -75,9 +79,19 @@ namespace Bevera.Models.Catalog
                         return discounted < 0 ? 0 : decimal.Round(discounted, 2);
                     }
                 }
+
                 return Price;
             }
         }
 
+        [NotMapped]
+        public decimal UnitProfit
+        {
+            get
+            {
+                var salePrice = EffectivePrice;
+                return salePrice - CostPrice;
+            }
+        }
     }
 }

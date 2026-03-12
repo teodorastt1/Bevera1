@@ -1,0 +1,55 @@
+﻿@model Bevera.Models.ViewModel.AdminPromotionFormViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Редакция на промоция";
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h1 class="h3 mb-3">Промоция за: @Model.ProductName</h1>
+
+        <div class="mb-3 text-muted">
+            Редовна цена: <strong>@Model.Price.ToString("0.00") €</strong>
+        </div>
+
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="ProductId" type="hidden" />
+            <input asp-for="ProductName" type="hidden" />
+            <input asp-for="Price" type="hidden" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="DiscountPercent" class="form-label">Намаление (%)</label>
+                    <input asp-for="DiscountPercent" class="form-control" min="1" max="90" step="0.01" />
+                    <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DiscountEndsAt" class="form-label">Край на промоцията</label>
+                    <input asp-for="DiscountEndsAt"
+                           class="form-control"
+                           type="datetime-local"
+                           value="@(Model.DiscountEndsAt.HasValue? Model.DiscountEndsAt.Value.ToString("yyyy-MM-ddTHH:mm") : "")" />
+                    <span asp-validation-for="DiscountEndsAt" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-text mt-2">
+                За да махнеш промоцията, изчисти и двете полета и запази.
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button class="btn btn-danger" type="submit">Запази промоцията</button>
+                <a class="btn btn-outline-secondary" asp-action="Index">Назад</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

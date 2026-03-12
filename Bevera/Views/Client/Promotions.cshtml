@@ -1,37 +1,39 @@
 ﻿@model List<Bevera.Models.Catalog.Product>
 
 @{
-    ViewData["Title"] = ViewBag.CategoryName ?? "Категория";
+    ViewData["Title"] = "Промоции";
 
     string q = ViewBag.Q as string ?? "";
     decimal? minPrice = ViewBag.MinPrice as decimal?;
     decimal? maxPrice = ViewBag.MaxPrice as decimal?;
     bool onlyAvailable = ViewBag.OnlyAvailable != null && (bool)ViewBag.OnlyAvailable;
-    bool onlyPromo = ViewBag.OnlyPromo != null && (bool)ViewBag.OnlyPromo;
 
     int? brandId = ViewBag.BrandId as int?;
+    int? categoryId = ViewBag.CategoryId as int?;
     int? minMl = ViewBag.MinMl as int?;
     int? maxMl = ViewBag.MaxMl as int?;
     string packageType = ViewBag.PackageType as string ?? "";
     string sort = ViewBag.Sort as string ?? "";
 
     var brands = ViewBag.Brands as List<Bevera.Models.Catalog.Brand> ?? new();
+    var categories = ViewBag.Categories as List<Bevera.Models.Catalog.Category> ?? new();
     var packageTypes = ViewBag.PackageTypes as List<string> ?? new();
 
-    var favIds = ViewBag.FavIds as List<int> ?? new List<int>();
+    var favIds = ViewBag.FavIds as List<int> ?? new();
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
-<div class="category-page-wrap py-4 py-lg-5">
+<div class="promo-page-wrap py-4 py-lg-5">
     <div class="container-fluid px-3 px-lg-4">
-        <div class="category-hero mb-4 mb-lg-5">
+        <div class="promo-hero mb-4 mb-lg-5">
             <div>
-                <h1 class="category-page-title mb-2">@ViewData["Title"]</h1>
-                <div class="category-page-subtitle">Разгледай продуктите от категория „@ViewData["Title"]“.</div>
+                <h1 class="promo-page-title mb-2">Промоции</h1>
+                <div class="promo-page-subtitle">Всички активни продукти с намаление в стила на Питиетата.</div>
             </div>
         </div>
 
         <div class="row g-4">
+            <!-- FILTERS -->
             <aside class="col-12 col-xl-3">
                 <div class="filter-box">
                     <div class="d-flex align-items-center justify-content-between mb-3">
@@ -39,17 +41,12 @@
 
                         <a class="btn clear-filter-btn"
                                asp-controller="Client"
-                               asp-action="Category"
-                               asp-route-id="@Context.Request.RouteValues["id"]">
+                               asp-action="Promotions">
                             Изчисти
                         </a>
                     </div>
 
-                    <form method="get"
-                          asp-controller="Client"
-                          asp-action="Category"
-                          asp-route-id="@Context.Request.RouteValues["id"]">
-
+                    <form method="get" asp-controller="Client" asp-action="Promotions">
                         <div class="mb-3">
                             <label class="form-label filter-label">Търси</label>
                             <input class="form-control filter-input" name="q" value="@q" placeholder="Напр. Coca Cola" />
@@ -92,6 +89,24 @@
                                     else
                                     {
                                         <option value="@brand.Id">@brand.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label filter-label">Категория</label>
+                            <select class="form-select filter-input" name="categoryId">
+                                <option value="">Всички</option>
+                                @foreach (var category in categories)
+                                {
+                                    @if (categoryId == category.Id)
+                                    {
+                                        <option value="@category.Id" selected>@category.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@category.Id">@category.Name</option>
                                     }
                                 }
                             </select>
@@ -202,25 +217,21 @@
                                 {
                                     <option value="ml_desc">Милилитри ↓</option>
                                 }
+
+                                @if (sort == "end_asc")
+                                {
+                                    <option value="end_asc" selected>Изтичат най-скоро</option>
+                                }
+                                else
+                                {
+                                    <option value="end_asc">Изтичат най-скоро</option>
+                                }
                             </select>
                         </div>
 
-                        <div class="form-check promo-check mb-2">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="onlyAvailable"
-                                   value="true"
-                            @(onlyAvailable ? "checked" : "") />
-                            <label class="form-check-label">Само налични</label>
-                        </div>
-
                         <div class="form-check promo-check mb-3">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="onlyPromo"
-                                   value="true"
-                            @(onlyPromo ? "checked" : "") />
-                            <label class="form-check-label">Само промоции</label>
+                            <input class="form-check-input" type="checkbox" name="onlyAvailable" value="true" @(onlyAvailable ? "checked" : "") />
+                            <label class="form-check-label">Само налични</label>
                         </div>
 
                         <button class="btn apply-filter-btn w-100" type="submit">
@@ -230,11 +241,12 @@
                 </div>
             </aside>
 
+            <!-- PRODUCTS -->
             <section class="col-12 col-xl-9">
-                @if (Model == null || Model.Count == 0)
+                @if (!Model.Any())
                 {
-                    <div class="alert empty-category-alert">
-                        Няма продукти по тези филтри.
+                    <div class="alert empty-promo-alert">
+                        В момента няма активни промоции по тези филтри.
                     </div>
                 }
                 else
@@ -246,43 +258,44 @@
                                       ?? p.Images?.FirstOrDefault()?.ImagePath
                                       ?? "/images/image-1.jpg";
 
-                            var available = (p.Quantity > 0 ? p.Quantity : p.StockQty);
                             bool isFav = favIds.Contains(p.Id);
-
-                            bool hasPromo = p.DiscountPercent.HasValue
-                                            && p.DiscountPercent.Value > 0
-                                            && (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= DateTime.UtcNow);
+                            var endDate = p.DiscountEndsAt?.ToString("yyyy-MM-ddTHH:mm:ss");
+                            var available = (p.Quantity > 0 ? p.Quantity : p.StockQty);
 
                             <div class="col-12 col-sm-6 col-lg-4">
-                                <div class="category-product-card">
-                                    <a class="category-card-link"
+                                <div class="promo-product-card">
+                                    <a class="promo-card-link"
                                            asp-controller="Client"
                                            asp-action="Product"
                                            asp-route-id="@p.Id">
 
-                                        <div class="category-product-img-wrap">
-                                            <img src="@img" alt="@p.Name" class="category-product-img" />
+                                        <div class="promo-product-img-wrap">
+                                            <img src="@img" alt="@p.Name" class="promo-product-img" />
+
+                                            <span class="promo-badge-small">-@p.DiscountPercent?.ToString("0")%</span>
 
                                             @if (User.IsInRole("Client") && available > 0 && available < 10)
                                             {
                                                 <span class="low-stock-badge">Ниска наличност</span>
                                             }
 
-                                            @if (hasPromo)
+                                            @if (p.DiscountEndsAt.HasValue)
                                             {
-                                                <span class="promo-badge-small">-@p.DiscountPercent.Value.ToString("0")%</span>
+                                                <div class="promo-timer promo-timer-card" data-discount-end="@endDate">
+                                                    До края: <span>--:--</span>
+                                                </div>
                                             }
                                         </div>
 
-                                        <div class="category-product-body">
-                                            <div class="category-product-name">@p.Name</div>
+                                        <div class="promo-product-body">
+                                            <div class="promo-product-name">@p.Name</div>
 
                                             @if (p.Brand != null)
                                             {
-                                                <div class="category-product-meta">@p.Brand.Name</div>
+                                                <div class="promo-product-meta">@p.Brand.Name</div>
                                             }
 
-                                            <div class="category-product-meta">
+                                            <div class="promo-product-meta">
                                                 @(decimal.Round(p.VolumeLiters * 1000m, 0)) мл
                                                 @if (!string.IsNullOrWhiteSpace(p.PackageType))
                                                 {
@@ -290,21 +303,14 @@
                                                 }
                                             </div>
 
-                                            <div class="category-product-price">
-                                                @if (hasPromo)
-                                                {
-                                                    <span class="old-price">@p.Price.ToString("0.00") €</span>
-                                                    <span class="new-price">@p.EffectivePrice.ToString("0.00") €</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="regular-price">@p.Price.ToString("0.00") €</span>
-                                                }
+                                            <div class="promo-product-price">
+                                                <span class="old-price">@p.Price.ToString("0.00") €</span>
+                                                <span class="new-price">@p.EffectivePrice.ToString("0.00") €</span>
                                             </div>
                                         </div>
                                     </a>
 
-                                    <div class="category-card-actions">
+                                    <div class="promo-card-actions">
                                         @if (User.Identity?.IsAuthenticated == true)
                                         {
                                             <form asp-controller="Cart" asp-action="Add" method="post" class="flex-fill">
@@ -362,12 +368,12 @@
 </div>
 
 <style>
-    .category-page-wrap {
+    .promo-page-wrap {
         background: linear-gradient(180deg, #fffdf9 0%, #fffaf4 40%, #fffefa 100%);
         min-height: 100vh;
     }
 
-    .category-hero {
+    .promo-hero {
         background: linear-gradient(135deg, rgba(255,255,255,.88), rgba(255,248,239,.96));
         border: 1px solid rgba(230, 220, 210, .85);
         border-radius: 30px;
@@ -375,7 +381,7 @@
         box-shadow: 0 16px 40px rgba(76, 52, 32, .06);
     }
 
-    .category-page-title {
+    .promo-page-title {
         font-family: 'Playfair Display', serif;
         font-weight: 800;
         font-size: 3rem;
@@ -384,7 +390,7 @@
         margin: 0;
     }
 
-    .category-page-subtitle {
+    .promo-page-subtitle {
         color: #7c8492;
         font-size: 1.08rem;
     }
@@ -462,7 +468,7 @@
             color: #1f2430;
         }
 
-    .empty-category-alert {
+    .empty-promo-alert {
         background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,250,244,.96));
         border: 1px solid rgba(230, 220, 210, .85);
         border-radius: 24px;
@@ -471,7 +477,7 @@
         box-shadow: 0 16px 40px rgba(76, 52, 32, .06);
     }
 
-    .category-product-card {
+    .promo-product-card {
         display: flex;
         flex-direction: column;
         height: 100%;
@@ -483,19 +489,19 @@
         transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
     }
 
-        .category-product-card:hover {
+        .promo-product-card:hover {
             transform: translateY(-6px);
             box-shadow: 0 18px 36px rgba(40, 32, 24, .14);
             border-color: rgba(245,179,1,.35);
         }
 
-    .category-card-link {
+    .promo-card-link {
         display: block;
         text-decoration: none;
         color: inherit;
     }
 
-    .category-product-img-wrap {
+    .promo-product-img-wrap {
         height: 240px;
         background: linear-gradient(180deg, #fffdfa 0%, #fff7ee 100%);
         display: flex;
@@ -507,7 +513,7 @@
         border-bottom: 1px solid rgba(238,230,220,.75);
     }
 
-    .category-product-img {
+    .promo-product-img {
         width: 100%;
         height: 100%;
         object-fit: contain;
@@ -515,15 +521,15 @@
         transition: transform .22s ease;
     }
 
-    .category-product-card:hover .category-product-img {
+    .promo-product-card:hover .promo-product-img {
         transform: scale(1.04);
     }
 
-    .category-product-body {
+    .promo-product-body {
         padding: 16px 16px 10px;
     }
 
-    .category-product-name {
+    .promo-product-name {
         color: #141821;
         font-size: 1rem;
         font-weight: 800;
@@ -535,13 +541,13 @@
         overflow: hidden;
     }
 
-    .category-product-meta {
+    .promo-product-meta {
         font-size: .86rem;
         color: #7b8492;
         margin-top: 4px;
     }
 
-    .category-product-price {
+    .promo-product-price {
         margin-top: 10px;
         display: flex;
         align-items: center;
@@ -561,13 +567,7 @@
         font-size: 1.08rem;
     }
 
-    .regular-price {
-        color: #1d2431;
-        font-weight: 900;
-        font-size: 1.08rem;
-    }
-
-    .category-card-actions {
+    .promo-card-actions {
         padding: 0 16px 16px;
         display: flex;
         gap: 10px;
@@ -611,21 +611,6 @@
             border-color: #dc3545;
         }
 
-    .low-stock-badge {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        z-index: 2;
-        padding: 7px 11px;
-        font-size: .76rem;
-        font-weight: 900;
-        letter-spacing: .03em;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #ffc928, #f5b301);
-        color: #111;
-        box-shadow: 0 10px 22px rgba(245,179,1,.24);
-    }
-
     .promo-badge-small {
         position: absolute;
         top: 12px;
@@ -641,6 +626,37 @@
         box-shadow: 0 10px 22px rgba(173,11,22,.22);
     }
 
+    .low-stock-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 2;
+        padding: 7px 11px;
+        font-size: .76rem;
+        font-weight: 900;
+        letter-spacing: .03em;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ffc928, #f5b301);
+        color: #111;
+        box-shadow: 0 10px 22px rgba(245,179,1,.24);
+    }
+
+    .promo-timer-card {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        z-index: 2;
+        background: rgba(17,17,17,.82);
+        color: #fff;
+        border-radius: 12px;
+        padding: 7px 10px;
+        font-size: .8rem;
+        font-weight: 700;
+        text-align: center;
+        backdrop-filter: blur(6px);
+    }
+
     @@media (max-width: 1199px) {
         .filter-box {
             position: static;
@@ -648,26 +664,26 @@
     }
 
     @@media (max-width: 991px) {
-        .category-page-title {
+        .promo-page-title {
             font-size: 2.4rem;
         }
 
-        .category-hero,
+        .promo-hero,
         .filter-box {
             border-radius: 24px;
         }
 
-        .category-product-img-wrap {
+        .promo-product-img-wrap {
             height: 220px;
         }
     }
 
     @@media (max-width: 575px) {
-        .category-product-img-wrap {
+        .promo-product-img-wrap {
             height: 210px;
         }
 
-        .category-card-actions {
+        .promo-card-actions {
             gap: 8px;
         }
     }

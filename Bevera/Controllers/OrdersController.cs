@@ -18,7 +18,10 @@ namespace Bevera.Controllers
         private readonly InvoiceService _invoiceService;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public OrdersController(ApplicationDbContext context, InvoiceService invoiceService, UserManager<ApplicationUser> userManager)
+        public OrdersController(
+            ApplicationDbContext context,
+            InvoiceService invoiceService,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _invoiceService = invoiceService;
@@ -26,26 +29,24 @@ namespace Bevera.Controllers
         }
 
         public async Task<IActionResult> Index(
-    string? status,
-    string? q,
-    string? name,
-    string? email,
-    DateTime? from,
-    DateTime? to,
-    string? payment,
-    string? sort,
-    int page = 1,
-    int pageSize = 10)
+            string? status,
+            string? q,
+            string? name,
+            string? email,
+            DateTime? from,
+            DateTime? to,
+            string? payment,
+            string? sort,
+            int page = 1,
+            int pageSize = 10)
         {
             IQueryable<Order> query = _context.Orders
                 .Include(o => o.Client)
                 .AsNoTracking();
 
-            // ===== Status =====
             if (!string.IsNullOrWhiteSpace(status))
                 query = query.Where(o => o.Status == status);
 
-            // ===== Quick search (id / email / name) =====
             if (!string.IsNullOrWhiteSpace(q))
             {
                 q = q.Trim();
@@ -58,14 +59,12 @@ namespace Bevera.Controllers
                 );
             }
 
-            // ===== Name =====
             if (!string.IsNullOrWhiteSpace(name))
             {
                 name = name.Trim();
                 query = query.Where(o => o.FullName != null && o.FullName.Contains(name));
             }
 
-            // ===== Email =====
             if (!string.IsNullOrWhiteSpace(email))
             {
                 email = email.Trim();
@@ -75,18 +74,15 @@ namespace Bevera.Controllers
                 );
             }
 
-            // ===== Date range =====
             if (from.HasValue)
                 query = query.Where(o => o.ChangedAt >= from.Value.Date);
 
             if (to.HasValue)
                 query = query.Where(o => o.ChangedAt < to.Value.Date.AddDays(1));
 
-            // ===== Payment =====
             if (!string.IsNullOrWhiteSpace(payment))
                 query = query.Where(o => o.PaymentStatus == payment);
 
-            // ===== Sorting =====
             sort = string.IsNullOrWhiteSpace(sort) ? "changed_desc" : sort;
 
             query = sort switch
@@ -99,7 +95,6 @@ namespace Bevera.Controllers
                 _ => query.OrderByDescending(o => o.ChangedAt)
             };
 
-            // ===== Paging validation =====
             if (page < 1) page = 1;
             if (pageSize < 5) pageSize = 5;
 
@@ -110,7 +105,6 @@ namespace Bevera.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            // ===== ViewBag (за да пазим филтрите) =====
             ViewBag.Status = status;
             ViewBag.Q = q;
             ViewBag.Name = name;
@@ -145,10 +139,6 @@ namespace Bevera.Controllers
             return View(order);
         }
 
-        // =========================
-        // Workflow actions (Worker/Admin)
-        // =========================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkPaid(int id)
@@ -169,7 +159,6 @@ namespace Bevera.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Submitted -> Preparing (само ако е Paid)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StartPreparing(int id)
@@ -187,12 +176,12 @@ namespace Bevera.Controllers
             order.ChangedAt = DateTime.UtcNow;
 
             await AddHistory(order.Id, OrderStates.Preparing, "Статус: подготовка/опаковане.");
+            await AddClientNotification(order, "Поръчката ви е в подготовка.", $"/Client/OrderDetails/{order.Id}");
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Preparing -> ReadyForPickup
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkReadyForPickup(int id)
@@ -207,12 +196,12 @@ namespace Bevera.Controllers
             order.ChangedAt = DateTime.UtcNow;
 
             await AddHistory(order.Id, OrderStates.ReadyForPickup, "Статус: готова за взимане/изпращане.");
+            await AddClientNotification(order, "Поръчката ви е готова за изпращане.", $"/Client/OrderDetails/{order.Id}");
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // ReadyForPickup -> Delivered
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Ship(int id)
@@ -227,12 +216,12 @@ namespace Bevera.Controllers
             order.ChangedAt = DateTime.UtcNow;
 
             await AddHistory(order.Id, OrderStates.Delivered, "Статус: изпратена/пристигнала.");
+            await AddClientNotification(order, "Поръчката ви е изпратена.", $"/Client/OrderDetails/{order.Id}");
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Delivered -> Received
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkReceived(int id)
@@ -247,14 +236,12 @@ namespace Bevera.Controllers
             order.ChangedAt = DateTime.UtcNow;
 
             await AddHistory(order.Id, OrderStates.Received, "Статус: получена.");
+            await AddClientNotification(order, "Поръчката е маркирана като получена.", $"/Client/OrderDetails/{order.Id}");
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // =========================
-        // Invoice download
-        // =========================
         public async Task<IActionResult> DownloadInvoice(int id)
         {
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
@@ -279,9 +266,6 @@ namespace Bevera.Controllers
             return PhysicalFile(path, order.InvoiceContentType ?? "application/pdf", order.InvoiceFileName ?? $"Invoice_{order.Id}.pdf");
         }
 
-        // =========================
-        // Helper: history
-        // =========================
         private async Task AddHistory(int orderId, string status, string? note)
         {
             var userId = _userManager.GetUserId(User) ?? "";
@@ -293,6 +277,23 @@ namespace Bevera.Controllers
                 Note = note,
                 ChangedAt = DateTime.UtcNow,
                 ChangedByUserId = userId
+            });
+
+            await Task.CompletedTask;
+        }
+
+        private async Task AddClientNotification(Order order, string message, string url)
+        {
+            if (string.IsNullOrWhiteSpace(order.ClientId))
+                return;
+
+            _context.AppNotifications.Add(new AppNotification
+            {
+                UserId = order.ClientId,
+                Message = $"Поръчка №{order.Id}: {message}",
+                Type = "Status",
+                Url = url,
+                CreatedAt = DateTime.UtcNow
             });
 
             await Task.CompletedTask;

@@ -28,12 +28,25 @@ namespace Bevera.Controllers
 
         // /Client/Category/8  (+ filters)
         [HttpGet]
-        public async Task<IActionResult> Category(int id, string? q, decimal? minPrice, decimal? maxPrice, bool onlyAvailable = false)
+        public async Task<IActionResult> Category(
+            int id,
+            string? q,
+            decimal? minPrice,
+            decimal? maxPrice,
+            bool onlyAvailable = false,
+            bool onlyPromo = false,
+            int? brandId = null,
+            int? minMl = null,
+            int? maxMl = null,
+            string? packageType = null,
+            string? sort = null)
         {
-            var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
+            var category = await _db.Categories
+                .FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
+
             if (category == null) return NotFound();
 
-            // If this is a parent category, show its subcategories (Bai Iliya style tiles)
+            // Ако е parent категория -> показваме подкатегориите
             var subcats = await _db.Categories
                 .Where(c => c.IsActive && c.ParentCategoryId == id)
                 .OrderBy(c => c.Name)
@@ -49,37 +62,111 @@ namespace Bevera.Controllers
             var productsQuery = _db.Products
                 .Where(p => p.CategoryId == id && p.IsActive)
                 .Include(p => p.Images)
-                .OrderBy(p => p.Name)
+                .Include(p => p.Brand)
                 .AsQueryable();
 
-            // search
+            // Search
             if (!string.IsNullOrWhiteSpace(q))
             {
                 q = q.Trim();
                 productsQuery = productsQuery.Where(p => p.Name.Contains(q));
             }
 
-            // price range
+            // Price range (по EffectivePrice, не по Price)
             if (minPrice.HasValue)
-                productsQuery = productsQuery.Where(p => p.Price >= minPrice.Value);
+            {
+                productsQuery = productsQuery.Where(p => p.EffectivePrice >= minPrice.Value);
+            }
 
             if (maxPrice.HasValue)
-                productsQuery = productsQuery.Where(p => p.Price <= maxPrice.Value);
+            {
+                productsQuery = productsQuery.Where(p => p.EffectivePrice <= maxPrice.Value);
+            }
 
-            // only available (не показваме колко, само филтър)
+            // Only available
             if (onlyAvailable)
-                productsQuery = productsQuery.Where(p => (p.Quantity > 0) || (p.StockQty > 0));
+            {
+                productsQuery = productsQuery.Where(p => p.StockQty > 0);
+            }
+
+            // Only promotions
+            if (onlyPromo)
+            {
+                productsQuery = productsQuery.Where(p =>
+                    p.DiscountPercent.HasValue &&
+                    p.DiscountPercent.Value > 0 &&
+                    (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= DateTime.UtcNow));
+            }
+
+            // Brand
+            if (brandId.HasValue && brandId.Value > 0)
+            {
+                productsQuery = productsQuery.Where(p => p.BrandId == brandId.Value);
+            }
+
+            // Min ml
+            if (minMl.HasValue)
+            {
+                var minLiters = minMl.Value / 1000m;
+                productsQuery = productsQuery.Where(p => p.VolumeLiters >= minLiters);
+            }
+
+            // Max ml
+            if (maxMl.HasValue)
+            {
+                var maxLiters = maxMl.Value / 1000m;
+                productsQuery = productsQuery.Where(p => p.VolumeLiters <= maxLiters);
+            }
+
+            // Package type
+            if (!string.IsNullOrWhiteSpace(packageType))
+            {
+                productsQuery = productsQuery.Where(p => p.PackageType != null && p.PackageType == packageType);
+            }
+
+            // Sorting
+            productsQuery = sort switch
+            {
+                "name_desc" => productsQuery.OrderByDescending(p => p.Name),
+                "price_asc" => productsQuery.OrderBy(p => p.EffectivePrice).ThenBy(p => p.Name),
+                "price_desc" => productsQuery.OrderByDescending(p => p.EffectivePrice).ThenBy(p => p.Name),
+                "promo_desc" => productsQuery
+                    .OrderByDescending(p => p.DiscountPercent.HasValue ? p.DiscountPercent.Value : 0)
+                    .ThenBy(p => p.Name),
+                "ml_asc" => productsQuery.OrderBy(p => p.VolumeLiters).ThenBy(p => p.Name),
+                "ml_desc" => productsQuery.OrderByDescending(p => p.VolumeLiters).ThenBy(p => p.Name),
+                _ => productsQuery.OrderBy(p => p.Name)
+            };
+
+            // Dropdown/filter data
+            var brands = await _db.Brands
+                .Where(b => b.IsActive && b.Products.Any(p => p.CategoryId == id && p.IsActive))
+                .OrderBy(b => b.Name)
+                .ToListAsync();
+
+            var packageTypes = await _db.Products
+                .Where(p => p.CategoryId == id && p.IsActive && p.PackageType != null && p.PackageType != "")
+                .Select(p => p.PackageType!)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
 
             var products = await productsQuery.ToListAsync();
 
-            // за да останат стойностите във филтрите след submit
             ViewBag.CategoryName = category.Name;
             ViewBag.Q = q;
             ViewBag.MinPrice = minPrice;
             ViewBag.MaxPrice = maxPrice;
             ViewBag.OnlyAvailable = onlyAvailable;
+            ViewBag.OnlyPromo = onlyPromo;
+            ViewBag.BrandId = brandId;
+            ViewBag.MinMl = minMl;
+            ViewBag.MaxMl = maxMl;
+            ViewBag.PackageType = packageType;
+            ViewBag.Sort = sort ?? "";
+            ViewBag.Brands = brands;
+            ViewBag.PackageTypes = packageTypes;
 
-            // за сърчицата (ако не си логната -> празно)
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var favIds = new List<int>();
 
@@ -103,10 +190,38 @@ namespace Bevera.Controllers
             var p = await _db.Products
                 .Include(x => x.Images)
                 .Include(x => x.Category)
+                .Include(x => x.Reviews)
+                    .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync(x => x.Id == id && x.IsActive);
 
             if (p == null) return NotFound();
-            return View(p); // Views/Client/Product.cshtml
+
+            bool canReview = false;
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (!string.IsNullOrWhiteSpace(userId) && User.IsInRole("Client"))
+                {
+                    canReview = await _db.OrderItems
+                        .Include(oi => oi.Order)
+                        .AnyAsync(oi =>
+                            oi.ProductId == id &&
+                            oi.Order.ClientId == userId &&
+                            oi.Order.Status == OrderStates.Received);
+
+                    var alreadyReviewed = await _db.Reviews
+                        .AnyAsync(r => r.ProductId == id && r.UserId == userId);
+
+                    if (alreadyReviewed)
+                        canReview = false;
+                }
+            }
+
+            ViewBag.CanReview = canReview;
+
+            return View(p);
         }
 
         // Search from navbar
@@ -119,11 +234,9 @@ namespace Bevera.Controllers
 
             if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
             {
-                // празно търсене -> не показваме всичко, само празен резултат
                 return View(new List<Bevera.Models.Catalog.Product>());
             }
 
-            // basic search in Name (and optionally Description)
             var products = await _db.Products
                 .AsNoTracking()
                 .Include(p => p.Images)
@@ -131,6 +244,154 @@ namespace Bevera.Controllers
                 .Where(p => p.Name.Contains(q) || (p.Description != null && p.Description.Contains(q)))
                 .OrderBy(p => p.Name)
                 .ToListAsync();
+
+            return View(products);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Promotions(
+            string? q,
+            decimal? minPrice,
+            decimal? maxPrice,
+            bool onlyAvailable = false,
+            int? brandId = null,
+            int? categoryId = null,
+            int? minMl = null,
+            int? maxMl = null,
+            string? packageType = null,
+            string? sort = null)
+        {
+            var now = DateTime.UtcNow;
+
+            var productsQuery = _db.Products
+                .AsNoTracking()
+                .Include(p => p.Images)
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Where(p => p.IsActive
+                    && p.DiscountPercent.HasValue
+                    && p.DiscountPercent.Value > 0
+                    && (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= now))
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                q = q.Trim();
+                productsQuery = productsQuery.Where(p => p.Name.Contains(q));
+            }
+
+            if (minPrice.HasValue)
+            {
+                productsQuery = productsQuery.Where(p => p.EffectivePrice >= minPrice.Value);
+            }
+
+            if (maxPrice.HasValue)
+            {
+                productsQuery = productsQuery.Where(p => p.EffectivePrice <= maxPrice.Value);
+            }
+
+            if (onlyAvailable)
+            {
+                productsQuery = productsQuery.Where(p => p.StockQty > 0);
+            }
+
+            if (brandId.HasValue && brandId.Value > 0)
+            {
+                productsQuery = productsQuery.Where(p => p.BrandId == brandId.Value);
+            }
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                productsQuery = productsQuery.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            if (minMl.HasValue)
+            {
+                var minLiters = minMl.Value / 1000m;
+                productsQuery = productsQuery.Where(p => p.VolumeLiters >= minLiters);
+            }
+
+            if (maxMl.HasValue)
+            {
+                var maxLiters = maxMl.Value / 1000m;
+                productsQuery = productsQuery.Where(p => p.VolumeLiters <= maxLiters);
+            }
+
+            if (!string.IsNullOrWhiteSpace(packageType))
+            {
+                productsQuery = productsQuery.Where(p => p.PackageType != null && p.PackageType == packageType);
+            }
+
+            productsQuery = sort switch
+            {
+                "name_desc" => productsQuery.OrderByDescending(p => p.Name),
+                "price_asc" => productsQuery.OrderBy(p => p.EffectivePrice).ThenBy(p => p.Name),
+                "price_desc" => productsQuery.OrderByDescending(p => p.EffectivePrice).ThenBy(p => p.Name),
+                "promo_desc" => productsQuery.OrderByDescending(p => p.DiscountPercent ?? 0).ThenBy(p => p.Name),
+                "ml_asc" => productsQuery.OrderBy(p => p.VolumeLiters).ThenBy(p => p.Name),
+                "ml_desc" => productsQuery.OrderByDescending(p => p.VolumeLiters).ThenBy(p => p.Name),
+                "end_asc" => productsQuery.OrderBy(p => p.DiscountEndsAt).ThenBy(p => p.Name),
+                _ => productsQuery.OrderBy(p => p.Name)
+            };
+
+            var brands = await _db.Brands
+                .Where(b => b.IsActive && b.Products.Any(p =>
+                    p.IsActive &&
+                    p.DiscountPercent.HasValue &&
+                    p.DiscountPercent.Value > 0 &&
+                    (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= now)))
+                .OrderBy(b => b.Name)
+                .ToListAsync();
+
+            var categories = await _db.Categories
+                .Where(c => c.IsActive && c.Products.Any(p =>
+                    p.IsActive &&
+                    p.DiscountPercent.HasValue &&
+                    p.DiscountPercent.Value > 0 &&
+                    (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= now)))
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            var packageTypes = await _db.Products
+                .Where(p => p.IsActive
+                    && p.DiscountPercent.HasValue
+                    && p.DiscountPercent.Value > 0
+                    && (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= now)
+                    && p.PackageType != null
+                    && p.PackageType != "")
+                .Select(p => p.PackageType!)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+
+            var products = await productsQuery.ToListAsync();
+
+            ViewBag.Q = q;
+            ViewBag.MinPrice = minPrice;
+            ViewBag.MaxPrice = maxPrice;
+            ViewBag.OnlyAvailable = onlyAvailable;
+            ViewBag.BrandId = brandId;
+            ViewBag.CategoryId = categoryId;
+            ViewBag.MinMl = minMl;
+            ViewBag.MaxMl = maxMl;
+            ViewBag.PackageType = packageType;
+            ViewBag.Sort = sort ?? "";
+            ViewBag.Brands = brands;
+            ViewBag.Categories = categories;
+            ViewBag.PackageTypes = packageTypes;
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var favIds = new List<int>();
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                favIds = await _db.Favorites
+                    .Where(f => f.UserId == userId)
+                    .Select(f => f.ProductId)
+                    .ToListAsync();
+            }
+
+            ViewBag.FavIds = favIds;
 
             return View(products);
         }
@@ -165,7 +426,6 @@ namespace Bevera.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-        // Client invoice download (only own orders)
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> DownloadInvoice(int id)
@@ -192,7 +452,6 @@ namespace Bevera.Controllers
 
             return PhysicalFile(path, order.InvoiceContentType ?? "application/pdf", order.InvoiceFileName ?? $"Invoice_{order.Id}.pdf");
         }
-
 
         [Authorize]
         [HttpGet]
@@ -228,7 +487,7 @@ namespace Bevera.Controllers
                     .ToListAsync();
             }
 
-            return View(vm); // Views/Client/Profile.cshtml
+            return View(vm);
         }
 
         [Authorize]
@@ -245,7 +504,7 @@ namespace Bevera.Controllers
                 .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
 
-            return View(favorites); // Views/Client/Favorites.cshtml
+            return View(favorites);
         }
 
         [Authorize]
@@ -261,6 +520,7 @@ namespace Bevera.Controllers
                 PhoneNumber = user.PhoneNumber ?? "",
                 Address = user.Address ?? ""
             };
+
             TempData["ToastMessage"] = "Данните бяха запазени успешно.";
             TempData["ToastType"] = "success";
 
@@ -294,7 +554,6 @@ namespace Bevera.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-
         [Authorize]
         [ValidateAntiForgeryToken]
         [HttpPost]
@@ -327,7 +586,6 @@ namespace Bevera.Controllers
             return RedirectToAction(nameof(Favorites));
         }
 
-        // GET: /Client/OrderDetails/5
         [HttpGet]
         public async Task<IActionResult> OrderDetails(int id)
         {
@@ -338,7 +596,7 @@ namespace Bevera.Controllers
                 .Include(o => o.Items)
                     .ThenInclude(oi => oi.Product)
                         .ThenInclude(p => p.Images)
-                .FirstOrDefaultAsync(o => o.Id == id && o.ClientId == userId); // <-- смени ClientUserId с твоето поле
+                .FirstOrDefaultAsync(o => o.Id == id && o.ClientId == userId);
 
             if (order == null)
                 return NotFound();
@@ -367,8 +625,5 @@ namespace Bevera.Controllers
 
             return View(vm);
         }
-
-
-
     }
 }
